@@ -1,0 +1,23 @@
+# Dependencies
+/node_modules
+
+# Environment variables
+.env
+.env.bak
+
+# SQLite database
+*.sqlite
+*.sqlite-journal
+
+# Temporary files
+/uploads/temp/
+/public/games/
+
+# Test files
+test-api.js
+test-admin.js
+seed-admin.js
+
+# OS generated files
+.DS_Store
+Thumbs.db
