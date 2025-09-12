@@ -29,7 +29,7 @@
 - **Express**: Web应用框架
 - **TypeScript**: 类型安全的JavaScript
 - **Prisma**: 现代数据库ORM
-- **PostgreSQL**: 关系型数据库
+- **MySQL**: 关系型数据库
 - **Redis**: 缓存和会话存储
 - **Nodemailer**: 邮件发送
 - **Multer**: 文件上传处理
@@ -68,7 +68,7 @@ personal-game-website/
 ### 环境要求
 
 - Node.js >= 16.0.0
-- PostgreSQL >= 12.0
+- MySQL >= 5.7 或 MySQL >= 8.0
 - Redis >= 6.0
 
 ### 安装步骤
@@ -95,7 +95,7 @@ personal-game-website/
    在 `backend` 目录下创建 `.env` 文件：
    ```env
    # 数据库配置
-   DATABASE_URL="postgresql://username:password@localhost:5432/game_website"
+   DATABASE_URL="mysql://username:password@localhost:3306/game_website"
    
    # Redis配置
    REDIS_URL="redis://localhost:6379"
