@@ -8,8 +8,8 @@ const prisma = new PrismaClient();
 // 扩展Request接口以包含user属性
 interface AuthenticatedRequest extends Request {
   user?: {
-    userId: number;
-    username: string;
+    id: string;
+    role: 'ADMIN' | 'USER';
   };
 }
 
@@ -39,19 +39,17 @@ const authenticateToken = (req: AuthenticatedRequest, res: Response, next: NextF
 // 获取所有游戏列表
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const games = await prisma.games.findMany({
+    const games = await prisma.game.findMany({
       select: {
         id: true,
-        title: true,
+        name: true,
         description: true,
-        version: true,
-        cover_image: true,
-        play_count: true,
-        file_size: true,
-        created_at: true
+        coverImage: true,
+        playCount: true,
+        createdAt: true
       },
       orderBy: {
-        created_at: 'desc'
+        createdAt: 'desc'
       }
     });
 
@@ -69,19 +67,19 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
-// 获取游戏详情
+// 获取单个游戏信息
 router.get('/:id', async (req: Request, res: Response) => {
   try {
-    const gameId = parseInt(req.params.id);
-    
-    if (isNaN(gameId)) {
+    const gameId = req.params.id;
+
+    if (!gameId) {
       return res.status(400).json({
         success: false,
         message: '无效的游戏ID'
       });
     }
 
-    const game = await prisma.games.findUnique({
+    const game = await prisma.game.findUnique({
       where: { id: gameId }
     });
 
@@ -110,7 +108,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 router.post('/activate', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { code } = req.body;
-    const userId = req.user!.userId;
+    const userId = req.user!.id;
 
     if (!code) {
       return res.status(400).json({
@@ -120,10 +118,10 @@ router.post('/activate', authenticateToken, async (req: AuthenticatedRequest, re
     }
 
     // 查找激活码
-    const activationCode = await prisma.activation_codes.findUnique({
+    const activationCode = await prisma.activationCode.findUnique({
       where: { code },
       include: {
-        games: true
+        game: true
       }
     });
 
@@ -134,7 +132,7 @@ router.post('/activate', authenticateToken, async (req: AuthenticatedRequest, re
       });
     }
 
-    if (activationCode.used) {
+    if (activationCode.status === 'ACTIVATED') {
       return res.status(400).json({
         success: false,
         message: '激活码已被使用'
@@ -142,10 +140,10 @@ router.post('/activate', authenticateToken, async (req: AuthenticatedRequest, re
     }
 
     // 检查用户是否已拥有该游戏
-    const existingUserGame = await prisma.user_games.findFirst({
+    const existingUserGame = await prisma.userGameActivation.findFirst({
       where: {
-        user_id: userId,
-        game_id: activationCode.game_id
+        userId: userId,
+        gameId: activationCode.gameId
       }
     });
 
@@ -159,19 +157,19 @@ router.post('/activate', authenticateToken, async (req: AuthenticatedRequest, re
     // 激活游戏（使用事务）
     await prisma.$transaction([
       // 标记激活码为已使用
-      prisma.activation_codes.update({
+      prisma.activationCode.update({
         where: { id: activationCode.id },
         data: {
-          used: true,
-          used_by: userId,
-          used_at: new Date()
+          status: 'ACTIVATED',
+          userId: userId,
+          activatedAt: new Date()
         }
       }),
       // 添加用户游戏记录
-      prisma.user_games.create({
+      prisma.userGameActivation.create({
         data: {
-          user_id: userId,
-          game_id: activationCode.game_id
+          userId: userId,
+          gameId: activationCode.gameId
         }
       })
     ]);
@@ -180,7 +178,7 @@ router.post('/activate', authenticateToken, async (req: AuthenticatedRequest, re
       success: true,
       message: '游戏激活成功',
       data: {
-        game: activationCode.games
+        game: activationCode.game
       }
     });
 
@@ -196,37 +194,21 @@ router.post('/activate', authenticateToken, async (req: AuthenticatedRequest, re
 // 获取用户的游戏列表
 router.get('/my/games', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const userId = req.user!.userId;
+    const userId = req.user!.id;
 
-    const userGames = await prisma.user_games.findMany({
-      where: { user_id: userId },
+    const userGames = await prisma.userGameActivation.findMany({
+      where: { userId: userId },
       include: {
-        games: true
+        game: true
       },
       orderBy: {
-        activated_at: 'desc'
+        activatedAt: 'desc'
       }
     });
 
-    interface UserGameWithActivation {
-      id: number;
-      title: string;
-      description: string | null;
-      version: string | null;
-      file_path: string;
-      cover_image: string | null;
-      play_count: number;
-      file_size: bigint | null;
-      created_at: Date;
-      updated_at: Date;
-      activatedAt: Date;
-      lastPlayed: Date | null;
-    }
-
-    const gamesWithActivationTime: UserGameWithActivation[] = userGames.map((userGame: any) => ({
-      ...userGame.games,
-      activatedAt: userGame.activated_at,
-      lastPlayed: userGame.last_played
+    const gamesWithActivationTime = userGames.map((userGame) => ({
+      ...userGame.game,
+      activatedAt: userGame.activatedAt
     }));
 
     res.json({
@@ -246,10 +228,10 @@ router.get('/my/games', authenticateToken, async (req: AuthenticatedRequest, res
 // 记录游戏游玩（更新游玩次数和最后游玩时间）
 router.post('/:id/play', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const gameId = parseInt(req.params.id);
-    const userId = req.user!.userId;
+    const gameId = req.params.id;
+    const userId = req.user!.id;
 
-    if (isNaN(gameId)) {
+    if (!gameId) {
       return res.status(400).json({
         success: false,
         message: '无效的游戏ID'
@@ -257,10 +239,10 @@ router.post('/:id/play', authenticateToken, async (req: AuthenticatedRequest, re
     }
 
     // 检查用户是否拥有该游戏
-    const userGame = await prisma.user_games.findFirst({
+    const userGame = await prisma.userGameActivation.findFirst({
       where: {
-        user_id: userId,
-        game_id: gameId
+        userId: userId,
+        gameId: gameId
       }
     });
 
@@ -274,21 +256,15 @@ router.post('/:id/play', authenticateToken, async (req: AuthenticatedRequest, re
     // 更新游戏信息（使用事务）
     await prisma.$transaction([
       // 增加游戏总游玩次数
-      prisma.games.update({
+      prisma.game.update({
         where: { id: gameId },
         data: {
-          play_count: {
+          playCount: {
             increment: 1
           }
         }
-      }),
-      // 更新用户最后游玩时间
-      prisma.user_games.update({
-        where: { id: userGame.id },
-        data: {
-          last_played: new Date()
-        }
       })
+      // 注意：UserGameActivation 模型没有 lastPlayed 字段，因此移除相关更新
     ]);
 
     res.json({
