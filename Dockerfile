@@ -40,41 +40,31 @@ RUN npm run build
 # 最终阶段: 运行时环境（保持同一 Node 版本，避免运行时不一致）
 FROM node:20-alpine AS production
 
-# 安装 nginx 用于服务前端和代理后端
-RUN apk add --no-cache nginx
-
 # 创建应用目录
 WORKDIR /app
 
-# 复制后端构建产物
 ENV NODE_ENV=production
-# 仅复制生产必要文件
+# 后端构建产物
 COPY --from=backend-build /app/backend/dist ./backend/dist
 COPY --from=backend-build /app/backend/package*.json ./backend/
 COPY --from=backend-build /app/backend/prisma ./backend/prisma/
 COPY --from=backend-build /app/backend/node_modules ./backend/node_modules
 RUN cd backend && npm prune --omit=dev
 
-# 复制前端构建产物到 nginx 目录
-COPY --from=frontend-build /app/frontend/dist /usr/share/nginx/html
-
-# 创建 nginx 配置文件
-COPY nginx.conf /etc/nginx/nginx.conf
+# 前端构建产物复制到应用目录供 Node 静态托管
+COPY --from=frontend-build /app/frontend/dist ./frontend/dist
 
 # 复制启动脚本
 COPY docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
-# 创建必要的目录
 RUN mkdir -p /app/backend/uploads/covers /app/backend/uploads/games /app/backend/uploads/temp
-RUN mkdir -p /var/log/nginx /var/lib/nginx/tmp
-RUN chown -R nginx:nginx /var/log/nginx /var/lib/nginx
 
-# 暴露端口
-EXPOSE 80 3000
+# 暴露端口（仅后端 API + 静态）
+EXPOSE 3000
 
 # 启动脚本
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-	CMD wget -q -O - http://127.0.0.1/health || exit 1
+  CMD wget -q -O - http://127.0.0.1:3000/health || exit 1
 
 ENTRYPOINT ["/docker-entrypoint.sh"]

@@ -4,7 +4,7 @@ services:
   app:
     build: .
     ports:
-      - "80:80"
+      - "8080:80"  # 前端静态+nginx 内部 80 暴露为宿主 8080
       - "3000:3000"
     env_file:
       - .env

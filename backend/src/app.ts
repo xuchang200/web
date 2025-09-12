@@ -47,8 +47,26 @@ app.use('/uploads/covers', express.static(path.join(process.cwd(), 'uploads', 'c
 import gameContentRoutes from './routes/gameContentRoutes';
 app.use('/game', gameContentRoutes);
 
-app.get('/', (req: Request, res: Response) => {
-  res.send('Hello from backend!');
+// 环境变量关键值校验（生产环境防止默认值）
+const requiredEnv = ['JWT_SECRET', 'DATABASE_URL'];
+requiredEnv.forEach((k) => {
+  if (!process.env[k]) {
+    console.warn(`[startup][warn] Missing env ${k}`);
+  }
+});
+
+// 提供前端静态资源 (dist)
+const frontendDist = path.join(process.cwd(), 'frontend', 'dist');
+app.use(express.static(frontendDist));
+
+// 健康检查 (返回基本状态，可扩展 DB/Redis 探测)
+app.get('/health', (_req: Request, res: Response) => {
+  res.status(200).json({ status: 'ok', time: new Date().toISOString() });
+});
+
+// 原根路径欢迎信息可以保留或移除，这里保留 API 提示
+app.get('/api', (_req: Request, res: Response) => {
+  res.json({ message: 'API root' });
 });
 
 // Routes
@@ -65,6 +83,14 @@ app.use('/api/admin/settings', settingsRoutes);
 app.use('/api/admin/email-smtp', emailSmtpRoutes);
 app.use('/api/verification', verificationRoutes);
 app.use('/api/public/settings', publicSettingsRoutes);
+
+// SPA fallback (在所有 API 路由之后, 错误处理中间件之前)
+app.use((req, res, next) => {
+  if (req.method === 'GET' && !req.path.startsWith('/api') && !req.path.startsWith('/uploads') && !req.path.startsWith('/game')) {
+    return res.sendFile(path.join(frontendDist, 'index.html'));
+  }
+  next();
+});
 
 // Error handling middleware
 app.use(errorHandler);

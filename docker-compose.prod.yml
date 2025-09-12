@@ -5,7 +5,7 @@ services:
   app:
     build: .
     ports:
-      - "3000:3000"  # 只暴露给内部网络
+      - "3000:3000"  # Node 提供 API + 静态前端
     env_file:
       - .env
     depends_on:
@@ -24,20 +24,6 @@ services:
     networks:
       - app-network
 
-  # Nginx 反向代理（用于生产环境）
-  nginx:
-    image: nginx:alpine
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/ssl:/etc/nginx/ssl  # SSL 证书目录
-    depends_on:
-      - app
-    restart: unless-stopped
-    networks:
-      - app-network
 
 volumes:
   redis_data:

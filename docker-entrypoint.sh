@@ -24,12 +24,6 @@ if [ ! -d "dist" ]; then
   npm run build
 fi
 
-# 启动 nginx (仅当存在可执行文件)
-if command -v nginx >/dev/null 2>&1; then
-  echo "[entrypoint] Starting nginx..."
-  nginx
-fi
-
 # 启动后端服务
 echo "[entrypoint] Starting backend service..."
 exec npm run start
