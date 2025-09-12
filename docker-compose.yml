@@ -1,11 +1,8 @@
-version: '3.8'
-
 services:
   app:
     build: .
     ports:
-      - "8080:80"  # 前端静态+nginx 内部 80 暴露为宿主 8080
-      - "3000:3000"
+      - "3000:3000"  # 单端口：Node 同时提供前端静态与 API
     env_file:
       - .env
     depends_on:
@@ -13,6 +10,8 @@ services:
     volumes:
       - uploads:/app/backend/uploads
     restart: unless-stopped
+    networks:
+      - app-network
 
   # 可选的本地数据库服务 - 如果使用云数据库，可以注释掉或删除
   # db:
@@ -29,12 +28,18 @@ services:
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      - "6379:6379"  # 如使用外部托管 Redis 可删除此服务
     volumes:
       - redis_data:/data
     restart: unless-stopped
+    networks:
+      - app-network
 
 volumes:
   # mysql_data:  # 如果不使用本地数据库，可以注释掉
   redis_data:
   uploads:
+
+networks:
+  app-network:
+    driver: bridge

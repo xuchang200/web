@@ -191,6 +191,68 @@ npx prisma studio
 - 使用JWT进行身份验证
 - 统一的错误处理和响应格式
 
+## 🐳 使用 Docker 部署（推荐）
+
+### 一次性构建并启动
+```bash
+# 在项目根目录（包含 docker-compose.yml 的位置）
+docker compose build
+docker compose up -d
+
+# 查看日志
+docker compose logs -f app
+```
+访问：`http://服务器IP:3000` （若使用 OpenResty/Nginx 绑定域名则通过域名访问）。
+
+### 必填环境变量（参考 .env.example）
+| 变量 | 说明 |
+|------|------|
+| DATABASE_URL | MySQL 连接串 |
+| JWT_SECRET | 长随机密钥（>=32字符） |
+| REDIS_HOST / REDIS_PORT | Redis 服务（使用 compose 内部 redis 则为 redis:6379） |
+| NODE_ENV | production |
+| MAINTENANCE_MODE | 是否启用维护模式 |
+
+### 生产推荐操作
+```
+# 健康检查
+curl http://127.0.0.1:3000/health
+
+# 运行数据库迁移（若需要手动）：
+docker compose exec app npx prisma migrate deploy
+```
+
+### 使用 OpenResty / Nginx 反向代理域名示例
+```
+server {
+    listen 80;
+    server_name example.com;
+
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+}
+```
+
+### 数据持久化
+- 上传目录：`uploads` 卷（映射到容器 `/app/backend/uploads`）。
+- Redis 数据：`redis_data` 卷（如使用云 Redis 可删除该卷和 redis 服务）。
+
+### 常见问题 FAQ
+| 问题 | 说明 |
+|------|------|
+| 为什么只暴露 3000 端口 | Node 同时提供静态前端与 API |
+| 如何加 HTTPS | 用 OpenResty/Nginx/Caddy 配置证书并反代到 3000 |
+| 改了代码需要重启吗 | 需重新构建镜像：`docker compose build && docker compose up -d` |
+| 上传文件会丢吗 | 不会，已使用命名卷 `uploads` |
+
 ## 🚀 部署
 
 ### 生产环境构建
