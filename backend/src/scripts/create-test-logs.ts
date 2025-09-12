@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient, LogType } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
@@ -7,54 +7,53 @@ async function createTestLogs() {
     console.log('开始创建测试日志数据...')
 
     // 创建一些测试日志
-    const testLogs = [
+    const testLogs: { type: LogType; message: string; ip: string }[] = [
       {
-        type: 'USER_LOGIN',
+        type: LogType.USER_LOGIN,
         message: '用户登录成功',
         ip: '192.168.1.100'
       },
       {
-        type: 'USER_LOGOUT',
+        type: LogType.USER_LOGOUT,
         message: '用户退出登录',
         ip: '192.168.1.100'
       },
       {
-        type: 'GAME_PLAY_VALID',
+        type: LogType.GAME_PLAY_VALID,
         message: '用户访问游戏',
         ip: '192.168.1.101'
       },
       {
-        type: 'ADMIN_SETTINGS_UPDATE',
+        type: LogType.ADMIN_SETTINGS_UPDATE,
         message: '管理员更新系统设置',
         ip: '192.168.1.1'
       },
       {
-        type: 'SECURITY_UNAUTHORIZED_ACCESS',
+        type: LogType.SECURITY_UNAUTHORIZED_ACCESS,
         message: '检测到未授权访问',
         ip: '192.168.1.200'
       },
       {
-        type: 'USER_LOGIN_FAILED',
+        type: LogType.USER_LOGIN_FAILED,
         message: '用户登录失败',
         ip: '192.168.1.200'
       },
       {
-        type: 'SYSTEM_ERROR',
+        type: LogType.SYSTEM_ERROR,
         message: '系统错误',
         ip: '127.0.0.1'
       },
       {
-        type: 'FILE_UPLOAD',
+        type: LogType.FILE_UPLOAD,
         message: '文件上传成功',
         ip: '192.168.1.100'
       }
     ]
 
     // 批量创建日志
+    // 顺序插入（数量不大）；若需要更快可使用 Promise.all
     for (const log of testLogs) {
-      await prisma.log.create({
-        data: log
-      })
+      await prisma.log.create({ data: log })
     }
 
     console.log(`成功创建 ${testLogs.length} 条测试日志`)
