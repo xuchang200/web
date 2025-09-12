@@ -21,20 +21,22 @@ services:
       retries: 3
       start_period: 20s
 
-  # PostgreSQL 数据库服务
+  # MySQL 数据库服务
   db:
-    image: postgres:15-alpine
+    image: mysql:8.0
     environment:
-      - POSTGRES_DB=${DB_NAME:-gamedb}
-      - POSTGRES_USER=${DB_USER:-user}
-      - POSTGRES_PASSWORD=${DB_PASSWORD:-password}
+      - MYSQL_DATABASE=${DB_NAME:-gamedb}
+      - MYSQL_USER=${DB_USER:-user}
+      - MYSQL_PASSWORD=${DB_PASSWORD:-password}
+      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD:-password}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - mysql_data:/var/lib/mysql
     ports:
-      - "5432:5432"
+      - "3306:3306"
     restart: unless-stopped
     networks:
       - app-network
+    command: --default-authentication-plugin=mysql_native_password
 
   # 本地 Redis 服务
   redis:
@@ -49,7 +51,7 @@ services:
       - app-network
 
 volumes:
-  postgres_data:
+  mysql_data:
   redis_data:
   uploads:
 

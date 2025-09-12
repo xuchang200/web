@@ -127,7 +127,7 @@ personal-game-website/
 ### 前置要求
 
 - **Node.js** >= 20.0.0
-- **MySQL** >= 8.0 或 **PostgreSQL** >= 13
+- **MySQL** >= 8.0
 - **Redis** >= 6.0
 - **Docker** (可选，推荐用于生产部署)
 

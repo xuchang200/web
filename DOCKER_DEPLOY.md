@@ -134,7 +134,7 @@ docker run -p 3000:3000 ghcr.io/xuchang200/web:latest
 
 # 使用环境变量
 docker run -p 3000:3000 \
-  -e DATABASE_URL="postgresql://user:password@localhost:5432/gamedb" \
+  -e DATABASE_URL="mysql://user:password@localhost:3306/gamedb" \
   -e JWT_SECRET="your-jwt-secret" \
   -e REDIS_URL="redis://localhost:6379" \
   ghcr.io/xuchang200/web:latest
@@ -150,7 +150,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - DATABASE_URL=postgresql://user:password@db:5432/gamedb
+      - DATABASE_URL=mysql://user:password@db:3306/gamedb
       - JWT_SECRET=your-jwt-secret
       - REDIS_URL=redis://redis:6379
     depends_on:
@@ -158,13 +158,15 @@ services:
       - redis
 
   db:
-    image: postgres:15-alpine
+    image: mysql:8.0
     environment:
-      - POSTGRES_DB=gamedb
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
+      - MYSQL_DATABASE=gamedb
+      - MYSQL_USER=user
+      - MYSQL_PASSWORD=password
+      - MYSQL_ROOT_PASSWORD=password
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - mysql_data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password
 
   redis:
     image: redis:7-alpine
@@ -172,7 +174,7 @@ services:
       - redis_data:/data
 
 volumes:
-  postgres_data:
+  mysql_data:
   redis_data:
 ```
 
@@ -181,7 +183,7 @@ volumes:
 ### 必需的环境变量
 ```bash
 # 数据库连接
-DATABASE_URL=postgresql://user:password@localhost:5432/gamedb
+DATABASE_URL=mysql://user:password@localhost:3306/gamedb
 
 # JWT 密钥
 JWT_SECRET=your-secure-jwt-secret-key

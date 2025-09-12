@@ -85,7 +85,7 @@ jobs:
         VITE_APP_VERSION=${{ github.event.inputs.branch }}-${{ github.run_number }}
         
         # Backend Environment Variables (build-time only)
-        DATABASE_URL=postgresql://user:password@localhost:5432/gamedb
+        DATABASE_URL=mysql://user:password@localhost:3306/gamedb
         JWT_SECRET=build-time-secret
         REDIS_URL=redis://localhost:6379
         NODE_ENV=production

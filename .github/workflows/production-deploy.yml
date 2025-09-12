@@ -72,16 +72,18 @@ jobs:
               start_period: 20s
         
           db:
-            image: postgres:15-alpine
+            image: mysql:8.0
             restart: unless-stopped
             environment:
-              - POSTGRES_DB=${DB_NAME}
-              - POSTGRES_USER=${DB_USER}
-              - POSTGRES_PASSWORD=${DB_PASSWORD}
+              - MYSQL_DATABASE=${DB_NAME}
+              - MYSQL_USER=${DB_USER}
+              - MYSQL_PASSWORD=${DB_PASSWORD}
+              - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
             volumes:
-              - postgres_data:/var/lib/postgresql/data
+              - mysql_data:/var/lib/mysql
             ports:
-              - "5432:5432"
+              - "3306:3306"
+            command: --default-authentication-plugin=mysql_native_password
         
           redis:
             image: redis:7-alpine
@@ -93,7 +95,7 @@ jobs:
               - "6379:6379"
         
         volumes:
-          postgres_data:
+          mysql_data:
           redis_data:
         EOF
 
@@ -154,7 +156,7 @@ jobs:
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### 🔧 Required Environment Variables" >> $GITHUB_STEP_SUMMARY
         echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
-        echo "export DATABASE_URL='postgresql://user:password@localhost:5432/gamedb'" >> $GITHUB_STEP_SUMMARY
+        echo "export DATABASE_URL='mysql://user:password@localhost:3306/gamedb'" >> $GITHUB_STEP_SUMMARY
         echo "export JWT_SECRET='your-production-jwt-secret'" >> $GITHUB_STEP_SUMMARY
         echo "export REDIS_URL='redis://localhost:6379'" >> $GITHUB_STEP_SUMMARY
         echo "export DB_NAME='gamedb'" >> $GITHUB_STEP_SUMMARY

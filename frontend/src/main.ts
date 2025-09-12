@@ -13,10 +13,6 @@ import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import { useAuthStore } from './store/auth'
 import { useSiteInfoStore } from './store/siteInfo'
 
-// if (import.meta.env.DEV) {
-//   import('./mock');
-// }
-
 const app = createApp(App)
 const pinia = createPinia()
 

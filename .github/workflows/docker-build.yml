@@ -50,7 +50,7 @@ jobs:
       run: |
         echo "VITE_API_URL=/api" > .env
         echo "VITE_APP_NAME=Personal Game Website" >> .env
-        echo "DATABASE_URL=postgresql://user:password@localhost:5432/gamedb" >> .env
+        echo "DATABASE_URL=mysql://user:password@localhost:3306/gamedb" >> .env
         echo "JWT_SECRET=your-jwt-secret-key" >> .env
         echo "REDIS_URL=redis://localhost:6379" >> .env
 
