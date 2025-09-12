@@ -310,15 +310,16 @@ router.post('/:gameId/start', authenticateToken, async (req, res) => {
       });
     }
 
-    // 记录游戏开始日志
-    await logGameAccess(
-      user.id, 
-      user.username, 
-      gameId, 
-      game.name, 
-      'START',
-      extractClientContext(req)
-    );
+    // 记录游戏开始事件
+    // if (user) {
+    //   await createSecurityRiskLog({
+    //     userId: user.id,
+    //     gameId: game.id,
+    //     ip: req.ip,
+    //     action: 'START',
+    //     details: `用户 ${user.username} 开始游玩游戏 ${game.name}`
+    //   });
+    // }
 
     res.json({
       success: true,
@@ -360,21 +361,22 @@ router.post('/:gameId/end', authenticateToken, async (req, res) => {
       });
     }
 
-    // 记录游戏结束日志
-    await logGameAccess(
-      user.id, 
-      user.username, 
-      gameId, 
-      game.name, 
-      'END',
-      extractClientContext(req)
-    );
-
     // 这里可以添加游玩时长的统计逻辑
     if (duration && typeof duration === 'number' && duration > 0) {
       // 可以在这里更新用户的游戏统计数据
       // 比如总游玩时长、游玩次数等
     }
+
+    // 记录游戏结束事件
+    // if (user) {
+    //   await createSecurityRiskLog({
+    //     userId: user.id,
+    //     gameId: game.id,
+    //     ip: req.ip,
+    //     action: 'END',
+    //     details: `用户 ${user.username} 结束游玩游戏 ${game.name}`
+    //   });
+    // }
 
     res.json({
       success: true,
