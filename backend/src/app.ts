@@ -56,7 +56,8 @@ requiredEnv.forEach((k) => {
 });
 
 // 提供前端静态资源 (dist)
-const frontendDist = path.join(process.cwd(), 'frontend', 'dist');
+// 注意：运行时工作目录在 /app/backend，因此不能使用 process.cwd() 拼 frontend 相对路径
+const frontendDist = path.resolve(__dirname, '../../frontend/dist');
 app.use(express.static(frontendDist));
 
 // 健康检查 (返回基本状态，可扩展 DB/Redis 探测)
