@@ -18,6 +18,11 @@ export const updateSiteSettings = (settings: SiteSettings) => {
   return request({ url: '/admin/settings/site', method: 'PUT', data: settings })
 }
 
+// 获取公共账号策略（无需管理员权限）
+export const getPublicAccountPolicy = () => {
+  return request<{ success: boolean; data: any }>({ url: '/public-settings/account-policy', method: 'GET' })
+}
+
 // 新的多组系统设置 API （后端实现后可切换使用）
 export const getSettingsGroup = <T=any>(groupKey: string) => {
   return request<{ success: boolean; data: T }>({ url: `/admin/settings/${groupKey}`, method: 'GET' })

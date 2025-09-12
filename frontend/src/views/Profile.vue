@@ -253,7 +253,7 @@ const activating = ref(false)
 const myGames = ref<Array<{ id: string; title: string; description: string; coverImage: string | null; activatedAt: string }>>([])
 
 import { getMyGames, activateByCode, getUserProfile, changePassword, requestAccountDeletion } from '@/api/user'
-import { getSettingsGroup } from '@/api/settings'
+import { getPublicAccountPolicy } from '@/api/settings'
 import { useAuthStore } from '@/store/auth'
 
 const authStore = useAuthStore()
@@ -393,7 +393,7 @@ function validateNewPassword(_rule: any, value: string, callback: Function) {
 
 async function loadAccountPolicy() {
   try {
-    const res = await getSettingsGroup<any>('account.policy')
+    const res = await getPublicAccountPolicy()
     if (res.success) {
       Object.assign(accountPolicy, res.data)
     }

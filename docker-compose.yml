@@ -36,12 +36,23 @@ services:
     restart: unless-stopped
     networks:
       - app-network
-    command: --default-authentication-plugin=mysql_native_password
+    command: >
+      --default-authentication-plugin=mysql_native_password
+      --skip-ssl
+      --disable-log-bin
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
 
   # 本地 Redis 服务
   redis:
     image: redis:7-alpine
-    command: redis-server --requirepass ${REDIS_PASSWORD:-redis-password}
+    command: redis-server --requirepass ${REDIS_PASSWORD:-redis-password} --appendonly yes
     ports:
       - "6379:6379"
     volumes:
@@ -49,6 +60,11 @@ services:
     restart: unless-stopped
     networks:
       - app-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 3s
+      retries: 5
 
 volumes:
   mysql_data:
