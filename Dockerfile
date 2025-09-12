@@ -1,5 +1,7 @@
 # 多阶段构建 - 阶段1: 构建前端
-FROM node:18-alpine AS frontend-build
+# Vite 7 需要 Node.js >= 20.19 或 22.12+，之前使用的 node:18-alpine 导致构建时报错：crypto.hash is not a function
+# 升级到 Node 20 LTS Alpine 镜像
+FROM node:20-alpine AS frontend-build
 
 WORKDIR /app/frontend
 
@@ -15,8 +17,8 @@ COPY frontend/ ./
 # 构建前端应用
 RUN npm run build
 
-# 多阶段构建 - 阶段2: 构建后端
-FROM node:18-alpine AS backend-build
+# 多阶段构建 - 阶段2: 构建后端（同样保持与前端一致的 Node 版本）
+FROM node:20-alpine AS backend-build
 
 WORKDIR /app/backend
 
@@ -35,8 +37,8 @@ RUN npx prisma generate
 # 构建 TypeScript 代码
 RUN npx tsc
 
-# 最终阶段: 运行时环境
-FROM node:18-alpine AS production
+# 最终阶段: 运行时环境（保持同一 Node 版本，避免运行时不一致）
+FROM node:20-alpine AS production
 
 # 安装 nginx 用于服务前端和代理后端
 RUN apk add --no-cache nginx
