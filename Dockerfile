@@ -14,6 +14,11 @@ RUN npm install --no-audit --no-fund
 # 复制前端源代码
 COPY frontend/ ./
 
+# 从根目录统一 .env 中抽取以 VITE_ 开头的变量生成前端使用的 .env.production.local
+# 仅保留 VITE_ 行，避免将后端敏感变量写入镜像层
+COPY .env /tmp/root.env
+RUN grep '^VITE_' /tmp/root.env > .env.production.local || true
+
 # 构建前端应用
 RUN npm run build
 

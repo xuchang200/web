@@ -14,14 +14,27 @@ cd /app/backend
 echo "[entrypoint] Generating Prisma client..."
 npx prisma generate
 
-# 运行数据库迁移
+# 运行数据库迁移（若有迁移）或回退到 db push
 echo "[entrypoint] Running database migrations..."
-npx prisma migrate deploy || echo "[entrypoint][warn] Migration failed or none to run"
+if [ -d "prisma/migrations" ] && [ "$(ls -A prisma/migrations | wc -l)" -gt 0 ]; then
+  npx prisma migrate deploy || echo "[entrypoint][warn] migrate deploy failed"
+else
+  echo "[entrypoint] No migrations found, performing prisma db push (baseline sync)"
+  npx prisma db push || echo "[entrypoint][error] db push failed"
+fi
 
 # 若 dist 不存在（防御性）则构建
 if [ ! -d "dist" ]; then
   echo "[entrypoint] dist not found, building backend..."
   npm run build
+fi
+
+# 可选：执行种子（幂等），可通过环境变量控制，默认执行
+if [ "${DISABLE_SEED}" = "1" ]; then
+  echo "[entrypoint] Seed skipped (DISABLE_SEED=1)"
+else
+  echo "[entrypoint] Running seed script..."
+  npm run seed || echo "[entrypoint][warn] seed failed"
 fi
 
 # 启动后端服务

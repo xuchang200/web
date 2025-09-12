@@ -1,49 +1,29 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, UserRole } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
+// 单一幂等种子脚本
 const prisma = new PrismaClient();
 
-async function main() {
-  console.log('开始创建测试用户...');
+async function seed() {
+  console.log('[seed] Start');
+  const adminPwd = await bcrypt.hash('admin123', 10);
+  const userPwd = await bcrypt.hash('user123', 10);
 
-  // 创建管理员用户
-  const adminPassword = await bcrypt.hash('admin123', 10);
   const admin = await prisma.user.upsert({
-    where: { email: 'admin@example.com' },
+    where: { username: 'admin' },
     update: {},
-    create: {
-      username: 'admin',
-      email: 'admin@example.com',
-      password: adminPassword,
-      role: 'ADMIN'
-    }
+    create: { username: 'admin', email: 'admin@example.com', password: adminPwd, role: UserRole.ADMIN }
   });
-
-  // 创建普通用户
-  const userPassword = await bcrypt.hash('user123', 10);
   const user = await prisma.user.upsert({
-    where: { email: 'testuser@example.com' },
+    where: { username: 'testuser' },
     update: {},
-    create: {
-      username: 'testuser',
-      email: 'testuser@example.com',
-      password: userPassword,
-      role: 'USER'
-    }
+    create: { username: 'testuser', email: 'user@example.com', password: userPwd, role: UserRole.USER }
   });
-
-  console.log('测试用户创建完成:');
-  console.log('管理员账号: admin / admin123 (或使用邮箱: admin@example.com)');
-  console.log('普通用户账号: testuser / user123 (或使用邮箱: testuser@example.com)');
+  console.log('[seed] Users ok ->', { admin: admin.username, user: user.username });
+  console.log('[seed] Done');
 }
 
-main()
-  .then(() => {
-    console.log('数据种子执行完成');
-  })
-  .catch((e) => {
-    console.error('数据种子执行失败:', e);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+seed().catch(e => {
+  console.error('[seed][error]', e);
+  process.exit(1);
+}).finally(() => prisma.$disconnect());
