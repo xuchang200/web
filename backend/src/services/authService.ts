@@ -1,4 +1,3 @@
-import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { AppError } from '../utils/AppError';
@@ -7,8 +6,7 @@ import type { Request } from 'express';
 import { extractClientContext } from '../utils/requestContext';
 import { getSettings } from './settings/settingsService';
 import { verifyVerificationCode, consumeVerificationCode } from './verificationCodeService';
-
-const prisma = new PrismaClient();
+import prisma from '../lib/prisma';
 
 export const register = async (userData: any, req?: Request) => {
   const { username, email, password, verificationCode } = userData;

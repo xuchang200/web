@@ -1,6 +1,4 @@
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '../lib/prisma';
 
 // 定时清理：账号冷静期结束的用户物理删除
 async function deleteExpiredAccounts() {

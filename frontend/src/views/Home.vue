@@ -1,17 +1,8 @@
 <template>
   <div class="home-page">
-    <!-- 顶部导航�?-->
+    <!-- 顶部导航 -->
     <header class="home-header">
-      import { getUserProfile } from '@/api/user'
-import { getPublishedGameList, checkGameAccess } from '@/api/game'
-import type { Game } from '@/types/game'
-import type { User } from '@/types/user'
-
-const router = useRouter()
-const authStore = useAuthStore()
-
-// 响应式数据
-const userProfile = ref<User | null>(null)s="header-content">
+      <div class="header-content">
         <!-- Logo -->
         <div class="logo" @click="$router.push('/')">
           <span class="logo-text">{{ siteInfo.siteName }}</span>
@@ -109,12 +100,17 @@ import GameCard from '@/components/GameCard.vue'
 import { getUserProfile } from '@/api/user'
 import { getPublishedGameList, checkGameAccess } from '@/api/game'
 import type { Game } from '@/types/game'
+import type { User } from '@/types/user'
+import { useSiteInfoStore } from '@/store/siteInfo'
+import SiteFooter from '@/components/SiteFooter.vue'
+import AnnouncementDialog from '@/components/AnnouncementDialog.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const siteInfo = useSiteInfoStore()
 
-// 响应式数�?
-const userProfile = ref(null)
+// 响应式数据
+const userProfile = ref<User | null>(null)
 const games = ref<Game[]>([])
 const loading = ref(false)
 
@@ -270,10 +266,6 @@ onMounted(() => {
 onBeforeUnmount(() => {
   document.removeEventListener('click', handleClickOutside)
 })
-import { useSiteInfoStore } from '@/store/siteInfo'
-import SiteFooter from '@/components/SiteFooter.vue'
-import AnnouncementDialog from '@/components/AnnouncementDialog.vue'
-const siteInfo = useSiteInfoStore()
 </script>
 
 <style scoped lang="scss">

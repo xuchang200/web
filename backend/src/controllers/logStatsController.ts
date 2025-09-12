@@ -1,8 +1,7 @@
 import { Request, Response } from 'express'
-import { PrismaClient, LogType } from '@prisma/client'
+import { LogType } from '@prisma/client'
 import { ApiResponse } from '../types/common'
-
-const prisma = new PrismaClient()
+import prisma from '../lib/prisma'
 
 interface LogStats {
   userOperations: number

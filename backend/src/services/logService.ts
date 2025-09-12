@@ -1,7 +1,6 @@
-import { PrismaClient, LogType } from '@prisma/client'
+import { LogType } from '@prisma/client'
 import { ClientContextInfo } from '../utils/requestContext'
-
-const prisma = new PrismaClient()
+import prisma from '../lib/prisma'
 
 export interface CreateLogInput {
   type: string

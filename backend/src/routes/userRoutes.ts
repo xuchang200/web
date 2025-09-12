@@ -1,5 +1,4 @@
 import express from 'express';
-import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { authenticateToken, requireAdmin } from '../middlewares/authMiddleware';
 import { activateByUser } from '../controllers/codeController';
@@ -7,9 +6,9 @@ import { AppError } from '../utils/AppError';
 import { getAllUsers, updateUser, deleteUser, createUser, getMyGames, getUserActivatedGames, activateGameForUser, deactivateGameForUser, updateProfile, changePassword } from '../controllers/userController';
 import { getSettings } from '../services/settings/settingsService';
 import { Prisma } from '@prisma/client';
+import prisma from '../lib/prisma';
 
 const router = express.Router();
-const prisma = new PrismaClient();
 
 // 获取当前用户信息 - 需要认证
 router.get('/profile', authenticateToken, async (req, res, next) => {

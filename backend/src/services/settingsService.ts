@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client';
 import { AppError } from '../utils/AppError';
-
-const prisma = new PrismaClient();
+import prisma from '../lib/prisma';
 
 // 系统设置接口
 export interface SiteSettings {

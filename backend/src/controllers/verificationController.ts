@@ -1,11 +1,9 @@
 import { Request, Response } from 'express'
 import { sendRegisterVerificationEmail, sendForgotPasswordVerificationEmail } from '../services/emailService'
 import { verifyVerificationCode, hasValidVerificationCode, getVerificationCodeTTL, consumeVerificationCode } from '../services/verificationCodeService'
-import { PrismaClient } from '@prisma/client'
 import { createLog } from '../services/logService'
 import bcrypt from 'bcryptjs'
-
-const prisma = new PrismaClient()
+import prisma from '../lib/prisma'
 
 /**
  * 发送注册验证码

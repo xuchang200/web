@@ -2,14 +2,14 @@ import express from 'express';
 import path from 'path';
 import fs from 'fs/promises';
 import fsSync from 'fs';
-import { PrismaClient, GameStatus } from '@prisma/client';
+import { GameStatus } from '@prisma/client';
 import { STORAGE_CONFIG } from '../config/storage';
 import { authenticateToken } from '../middlewares/authMiddleware';
 import { logGameAccess } from '../services/logService';
 import { extractClientContext } from '../utils/requestContext';
+import prisma from '../lib/prisma';
 
 const router = express.Router();
-const prisma = new PrismaClient();
 
 // 游戏内容访问中间件 - 权限检查
 const checkGameAccess = async (req: express.Request, res: express.Response, next: express.NextFunction) => {

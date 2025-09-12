@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { PrismaClient, GameStatus } from '@prisma/client';
+import { GameStatus } from '@prisma/client';
 import { AppError } from '../utils/AppError';
 import path from 'path';
 import fs from 'fs/promises';
@@ -7,8 +7,7 @@ import fsSync from 'fs';
 import { getFileAccessUrl, STORAGE_CONFIG, ensureDirectoryExists } from '../config/storage';
 import { createLog, logValidGamePlay, logFileOperation } from '../services/logService';
 import { extractClientContext } from '../utils/requestContext';
-
-const prisma = new PrismaClient();
+import prisma from '../lib/prisma';
 
 // ==================== 辅助函数 ====================
 

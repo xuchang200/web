@@ -1,10 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
-import { PrismaClient, CodeStatus, LogType } from '@prisma/client';
+import { CodeStatus, LogType } from '@prisma/client';
 import { AppError } from '../utils/AppError';
 import { createLog, logCodeActivation } from '../services/logService';
 import { extractClientContext } from '../utils/requestContext';
-
-const prisma = new PrismaClient();
+import prisma from '../lib/prisma';
 
 // 列表查询（支持关键词、状态、按游戏筛选、分页）
 export const listActivationCodes = async (req: Request, res: Response, next: NextFunction) => {

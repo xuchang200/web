@@ -30,7 +30,7 @@ const defaultMap: Record<SettingsGroupKey, any> = {
   'email.smtp': DEFAULT_EMAIL_SMTP
 }
 
-const prisma = new PrismaClient()
+import prisma from '../../lib/prisma'
 
 const memoryCache = new Map<string, any>()
 

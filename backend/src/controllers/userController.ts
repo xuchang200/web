@@ -1,12 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
-import { PrismaClient } from '@prisma/client';
 import { AppError } from '../utils/AppError';
 import bcrypt from 'bcryptjs';
 import { getFileAccessUrl } from '../config/storage';
 import { createLog } from '../services/logService';
 import { extractClientContext } from '../utils/requestContext';
-
-const prisma = new PrismaClient();
+import prisma from '../lib/prisma';
 
 export const getAllUsers = async (req: Request, res: Response, next: NextFunction) => {
   try {

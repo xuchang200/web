@@ -1,10 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import multer from 'multer';
-import { PrismaClient } from '@prisma/client';
 import { logSystemError, logFileOperation } from '../services/logService';
 import { extractClientContext } from '../utils/requestContext';
-
-const prisma = new PrismaClient();
+import prisma from '../lib/prisma';
 
 interface AppError extends Error {
   statusCode?: number;

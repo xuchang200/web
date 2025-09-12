@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client';
 import { addDays, startOfDay, endOfDay, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, format } from 'date-fns';
-
-const prisma = new PrismaClient();
+import prisma from '../../lib/prisma';
 
 export interface DashboardMetrics {
   // 核心指标
