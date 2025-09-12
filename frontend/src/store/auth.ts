@@ -8,7 +8,6 @@ function isUser(obj: any): obj is User {
     && typeof obj.id === 'string'
     && typeof obj.username === 'string'
     && typeof obj.email === 'string'
-    && typeof obj.name === 'string'
     && (obj.role === 'ADMIN' || obj.role === 'USER');
 }
 

@@ -6,11 +6,12 @@ export interface UserInfo {
   id: string // 与后端 Prisma User.id (String uuid) 对齐
   username: string
   email: string
-  name: string
+  name?: string // 可选字段，后端目前不返回
   avatar?: string
-  createdAt: string
-  activatedGamesCount: number
+  createdAt?: string
+  activatedGamesCount?: number
   role: UserRole // 用户角色
+  lastLoginAt?: string // 后端返回的最后登录时间
 }
 
 // 兼容历史代码中使用的 User 类型名（auth store 等）。

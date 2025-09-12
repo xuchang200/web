@@ -2,7 +2,16 @@
   <div class="home-page">
     <!-- 顶部导航�?-->
     <header class="home-header">
-      <div class="header-content">
+      import { getUserProfile } from '@/api/user'
+import { getPublishedGameList, checkGameAccess } from '@/api/game'
+import type { Game } from '@/types/game'
+import type { User } from '@/types/user'
+
+const router = useRouter()
+const authStore = useAuthStore()
+
+// 响应式数据
+const userProfile = ref<User | null>(null)s="header-content">
         <!-- Logo -->
         <div class="logo" @click="$router.push('/')">
           <span class="logo-text">{{ siteInfo.siteName }}</span>
@@ -118,12 +127,24 @@ const userAvatarText = computed(() => {
 // 获取用户详细信息
 const fetchUserProfile = async () => {
   if (!authStore.isAuthenticated) return
+  
+  // 如果 store 中已经有用户信息，且包含必要字段，就不需要重新请求
+  if (authStore.user && authStore.user.id && authStore.user.username) {
+    userProfile.value = authStore.user
+    return
+  }
+  
   try {
     const response = await getUserProfile()
     userProfile.value = response.data
   } catch (error) {
     console.error('获取用户信息失败:', error)
-    msg.error(TextEx.loadUserFail + '，请重新登录', 'home-load-user-fail')
+    // 如果请求失败但 store 中有基本信息，就使用 store 中的信息
+    if (authStore.user) {
+      userProfile.value = authStore.user
+    } else {
+      msg.error(TextEx.loadUserFail + '，请重新登录', 'home-load-user-fail')
+    }
   }
 }
 

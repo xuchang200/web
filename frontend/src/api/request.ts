@@ -6,7 +6,7 @@ import { useAuthStore } from '@/store/auth';
 // Create an Axios instance
 const service = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api', // api base_url
-  timeout: 5000, // request timeout
+  timeout: 15000, // request timeout - 增加到15秒，临时解决超时问题
 });
 
 // Request interceptor
