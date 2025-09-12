@@ -10,7 +10,6 @@ docs/
 *.txt
 
 # 排除开发环境配置
-.env
 .env.local
 .env.development
 .env.test

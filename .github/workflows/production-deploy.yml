@@ -1,0 +1,164 @@
+name: Production Deploy
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to deploy'
+        required: true
+        default: 'latest'
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: xuchang200/web
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'production' }}
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Generate deployment files
+      run: |
+        # 创建生产环境的 docker-compose.yml
+        cat << 'EOF' > docker-compose.deploy.yml
+        version: '3.8'
+        
+        services:
+          app:
+            image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.event.inputs.tag || github.ref_name }}
+            restart: unless-stopped
+            ports:
+              - "3000:3000"
+            environment:
+              - NODE_ENV=production
+              - DATABASE_URL=${DATABASE_URL}
+              - JWT_SECRET=${JWT_SECRET}
+              - REDIS_URL=${REDIS_URL}
+            volumes:
+              - ./uploads:/app/backend/uploads
+              - ./logs:/app/logs
+            depends_on:
+              - db
+              - redis
+            healthcheck:
+              test: ["CMD", "wget", "-q", "-O", "-", "http://127.0.0.1:3000/health"]
+              interval: 30s
+              timeout: 5s
+              retries: 3
+              start_period: 20s
+        
+          db:
+            image: postgres:15-alpine
+            restart: unless-stopped
+            environment:
+              - POSTGRES_DB=${DB_NAME}
+              - POSTGRES_USER=${DB_USER}
+              - POSTGRES_PASSWORD=${DB_PASSWORD}
+            volumes:
+              - postgres_data:/var/lib/postgresql/data
+            ports:
+              - "5432:5432"
+        
+          redis:
+            image: redis:7-alpine
+            restart: unless-stopped
+            command: redis-server --requirepass ${REDIS_PASSWORD}
+            volumes:
+              - redis_data:/data
+            ports:
+              - "6379:6379"
+        
+        volumes:
+          postgres_data:
+          redis_data:
+        EOF
+
+    - name: Create startup script
+      run: |
+        cat << 'EOF' > deploy.sh
+        #!/bin/bash
+        set -e
+        
+        echo "🚀 Starting deployment..."
+        
+        # 拉取最新镜像
+        docker-compose -f docker-compose.deploy.yml pull app
+        
+        # 停止旧容器
+        docker-compose -f docker-compose.deploy.yml down
+        
+        # 启动新容器
+        docker-compose -f docker-compose.deploy.yml up -d
+        
+        # 等待服务启动
+        echo "⏳ Waiting for services to start..."
+        sleep 30
+        
+        # 检查服务状态
+        if docker-compose -f docker-compose.deploy.yml ps | grep -q "Up"; then
+          echo "✅ Deployment successful!"
+        else
+          echo "❌ Deployment failed!"
+          docker-compose -f docker-compose.deploy.yml logs
+          exit 1
+        fi
+        EOF
+        
+        chmod +x deploy.sh
+
+    - name: Archive deployment files
+      uses: actions/upload-artifact@v4
+      with:
+        name: deployment-files-${{ github.ref_name }}
+        path: |
+          docker-compose.deploy.yml
+          deploy.sh
+        retention-days: 30
+
+    - name: Create deployment summary
+      run: |
+        echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "- **Environment**: ${{ github.event.inputs.environment || 'production' }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Image**: \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.event.inputs.tag || github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "- **Deployment Time**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📋 Deployment Steps" >> $GITHUB_STEP_SUMMARY
+        echo "1. Download the deployment files from the artifacts" >> $GITHUB_STEP_SUMMARY
+        echo "2. Set up your environment variables" >> $GITHUB_STEP_SUMMARY
+        echo "3. Run: \`./deploy.sh\`" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🔧 Required Environment Variables" >> $GITHUB_STEP_SUMMARY
+        echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+        echo "export DATABASE_URL='postgresql://user:password@localhost:5432/gamedb'" >> $GITHUB_STEP_SUMMARY
+        echo "export JWT_SECRET='your-production-jwt-secret'" >> $GITHUB_STEP_SUMMARY
+        echo "export REDIS_URL='redis://localhost:6379'" >> $GITHUB_STEP_SUMMARY
+        echo "export DB_NAME='gamedb'" >> $GITHUB_STEP_SUMMARY
+        echo "export DB_USER='user'" >> $GITHUB_STEP_SUMMARY
+        echo "export DB_PASSWORD='password'" >> $GITHUB_STEP_SUMMARY
+        echo "export REDIS_PASSWORD='your-redis-password'" >> $GITHUB_STEP_SUMMARY
+        echo "\`\`\`" >> $GITHUB_STEP_SUMMARY

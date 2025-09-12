@@ -1,34 +1,47 @@
 services:
   app:
-    build: .
+    image: ghcr.io/xuchang200/web:latest
     ports:
       - "3000:3000"  # 单端口：Node 同时提供前端静态与 API
     env_file:
       - .env
     depends_on:
       - redis
+      - db
     volumes:
       - uploads:/app/backend/uploads
+      - ./logs:/app/logs
+    restart: unless-stopped
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://127.0.0.1:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  # PostgreSQL 数据库服务
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=${DB_NAME:-gamedb}
+      - POSTGRES_USER=${DB_USER:-user}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
     restart: unless-stopped
     networks:
       - app-network
 
-  # 可选的本地数据库服务 - 如果使用云数据库，可以注释掉或删除
-  # db:
-  #   image: mysql:8.0
-  #   env_file:
-  #     - .env
-  #   volumes:
-  #     - mysql_data:/var/lib/mysql
-  #   ports:
-  #     - "3306:3306"
-  #   restart: unless-stopped
-
   # 本地 Redis 服务
   redis:
     image: redis:7-alpine
+    command: redis-server --requirepass ${REDIS_PASSWORD:-redis-password}
     ports:
-      - "6379:6379"  # 如使用外部托管 Redis 可删除此服务
+      - "6379:6379"
     volumes:
       - redis_data:/data
     restart: unless-stopped
@@ -36,7 +49,7 @@ services:
       - app-network
 
 volumes:
-  # mysql_data:  # 如果不使用本地数据库，可以注释掉
+  postgres_data:
   redis_data:
   uploads:
 

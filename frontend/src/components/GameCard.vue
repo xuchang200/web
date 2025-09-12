@@ -68,24 +68,34 @@ const playGame = () => {
   position: relative;
   background: white;
   border-radius: 20px;
-  border: 3px solid #A56A5A; /* 修改为粉棕色 */
+  border: 3px solid #A56A5A;
   overflow: hidden;
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 4px 15px rgba(255, 128, 171, 0.2);
+  width: 100%;
   
   &:hover {
     transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(165, 106, 90, 0.3); /* 阴影也调整为粉棕色调 */
+    box-shadow: 0 8px 25px rgba(165, 106, 90, 0.3);
     border-color: #8b574a;
+  }
+  
+  /* 移动端点击效果 */
+  @media (hover: none) and (pointer: coarse) {
+    &:active {
+      transform: scale(0.98);
+      transition: transform 0.1s ease;
+    }
   }
 }
 
 .game-image {
   width: 100%;
-  aspect-ratio: 4/3; // 固定4:3比例
+  aspect-ratio: 4/3;
   overflow: hidden;
   background: linear-gradient(45deg, #ff80ab, #ffcdd2);
+  position: relative;
   
   img {
     width: 100%;
@@ -114,7 +124,7 @@ const playGame = () => {
   border-radius: 20px;
   animation: fadeIn 0.3s ease;
   z-index: 10;
-  overflow-y: auto; // 允许垂直滚动
+  overflow-y: auto;
 }
 
 @keyframes fadeIn {
@@ -131,6 +141,7 @@ const playGame = () => {
 .details-content {
   position: relative;
   text-align: center;
+  width: 100%;
   
   h4 {
     font-size: 1.4rem;
@@ -157,6 +168,7 @@ const playGame = () => {
     cursor: pointer;
     transition: all 0.3s ease;
     border-bottom: 3px solid #e91e63;
+    min-height: 44px; /* 适合触摸的最小高度 */
     
     &:hover {
       background: linear-gradient(135deg, #f50057 0%, #ff4081 100%);
@@ -193,28 +205,30 @@ const playGame = () => {
       transform: scale(1.1);
     }
     
-    // 在桌面端隐藏关闭按钮
+    /* 在桌面端隐藏关闭按钮 */
     @media (min-width: 769px) {
       display: none;
     }
   }
 }
 
-// 响应式设计
-@media (max-width: 768px) {
+/* ========================================================================
+   移动端响应式设计
+   ======================================================================== */
+
+@media (max-width: 767px) {
   .game-card {
     border-width: 2px;
+    border-radius: 15px;
+    margin: 0 auto;
+    max-width: 400px; /* 限制最大宽度 */
   }
   
   .game-image {
-    aspect-ratio: 4/3; // 保持4:3比例
+    border-radius: 15px 15px 0 0;
   }
   
-  .game-title {
-    font-size: 1rem;
-  }
-  
-  // 在移动端将详情弹出层改为全屏模态框
+  /* 在移动端将详情弹出层改为全屏模态框 */
   .game-details-popup {
     position: fixed;
     top: 0;
@@ -226,6 +240,7 @@ const playGame = () => {
     padding: 80px 30px 30px 30px;
     z-index: 9999;
     animation: slideInUp 0.3s ease;
+    backdrop-filter: blur(15px);
   }
   
   .details-content {
@@ -244,21 +259,25 @@ const playGame = () => {
       line-height: 1.6;
       margin-bottom: 30px;
       color: #555;
-    }
-    
-    .game-meta {
-      margin-bottom: 30px;
-      
-      span {
-        font-size: 1rem;
-        padding: 8px 16px;
-      }
+      max-height: 200px;
+      overflow-y: auto;
     }
     
     .play-button {
       padding: 15px 30px;
       font-size: 1.1rem;
       border-radius: 30px;
+      width: 100%;
+      max-width: 200px;
+    }
+    
+    .close-button {
+      display: flex; /* 在移动端显示关闭按钮 */
+      top: 20px;
+      right: 20px;
+      width: 40px;
+      height: 40px;
+      font-size: 1.5rem;
     }
   }
 }
@@ -274,36 +293,25 @@ const playGame = () => {
   }
 }
 
-@media (max-width: 480px) {
+/* 超小屏设备优化 */
+@media (max-width: 479px) {
   .game-card {
-    // 为单列显示优化卡片尺寸
-    &:active {
-      transform: scale(0.98);
-      box-shadow: 0 2px 10px rgba(165, 106, 90, 0.2);
-    }
+    border-radius: 12px;
+    margin: 0 auto;
   }
   
   .game-image {
-    aspect-ratio: 4/3; // 保持4:3比例，移除固定高度
+    border-radius: 12px 12px 0 0;
   }
   
-  .game-title {
-    font-size: 1.1rem; // 稍微增大标题字体
-    padding: 5px 0;
-  }
-  
-  .game-info {
-    padding: 15px;
-  }
-  
-  // 在小屏幕上优化全屏详情的显示
+  /* 优化小屏幕上的全屏详情显示 */
   .game-details-popup {
-    padding: 60px 20px 20px 20px; // 减少顶部边距
+    padding: 70px 20px 20px 20px;
   }
   
   .details-content {
     h4 {
-      font-size: 1.6rem; // 调整标题大小
+      font-size: 1.6rem;
       margin-bottom: 15px;
     }
     
@@ -311,24 +319,178 @@ const playGame = () => {
       font-size: 0.95rem;
       line-height: 1.5;
       margin-bottom: 25px;
-      // 添加最大高度和滚动，防止描述过长
-      max-height: 200px;
-      overflow-y: auto;
+      max-height: 150px;
     }
     
-    .game-meta {
-      margin-bottom: 25px;
-      
-      span {
-        font-size: 0.9rem;
-        padding: 6px 12px;
-      }
+    .play-button {
+      padding: 12px 25px;
+      font-size: 1rem;
+      width: 100%;
+    }
+    
+    .close-button {
+      top: 15px;
+      right: 15px;
+      width: 36px;
+      height: 36px;
+      font-size: 1.3rem;
+    }
+  }
+}
+
+/* 平板设备优化 */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .game-card {
+    border-radius: 18px;
+  }
+  
+  .game-image {
+    border-radius: 18px 18px 0 0;
+  }
+  
+  .details-content {
+    h4 {
+      font-size: 1.5rem;
+    }
+    
+    .game-description {
+      font-size: 0.95rem;
     }
     
     .play-button {
       padding: 12px 25px;
       font-size: 1rem;
     }
+  }
+}
+
+/* 大屏设备优化 */
+@media (min-width: 1200px) {
+  .game-card {
+    border-radius: 25px;
+    
+    &:hover {
+      transform: translateY(-8px);
+    }
+  }
+  
+  .game-image {
+    border-radius: 25px 25px 0 0;
+  }
+  
+  .details-content {
+    padding: 25px;
+    
+    h4 {
+      font-size: 1.6rem;
+      margin-bottom: 15px;
+    }
+    
+    .game-description {
+      font-size: 1rem;
+      margin-bottom: 20px;
+    }
+    
+    .play-button {
+      padding: 12px 25px;
+      font-size: 1rem;
+    }
+  }
+}
+
+/* 触摸设备特殊优化 */
+@media (hover: none) and (pointer: coarse) {
+  .game-card {
+    /* 移除hover效果，使用active状态 */
+    &:hover {
+      transform: none;
+      box-shadow: 0 4px 15px rgba(255, 128, 171, 0.2);
+      border-color: #A56A5A;
+    }
+    
+    &:active {
+      transform: scale(0.98);
+      box-shadow: 0 2px 10px rgba(165, 106, 90, 0.2);
+    }
+  }
+  
+  .game-card:hover .game-image img {
+    transform: none;
+  }
+  
+  .details-content .play-button {
+    &:hover {
+      background: linear-gradient(135deg, #ff4081 0%, #ff80ab 100%);
+      transform: none;
+      box-shadow: none;
+    }
+    
+    &:active {
+      background: linear-gradient(135deg, #f50057 0%, #ff4081 100%);
+      transform: scale(0.95);
+    }
+  }
+}
+
+/* 处理横屏模式 */
+@media (max-height: 500px) and (orientation: landscape) {
+  .game-details-popup {
+    padding: 40px 20px 20px 20px;
+    align-items: flex-start;
+    overflow-y: auto;
+  }
+  
+  .details-content {
+    margin-top: 20px;
+    
+    h4 {
+      font-size: 1.3rem;
+      margin-bottom: 10px;
+    }
+    
+    .game-description {
+      font-size: 0.9rem;
+      margin-bottom: 15px;
+      max-height: 100px;
+    }
+    
+    .play-button {
+      padding: 10px 20px;
+      font-size: 0.9rem;
+    }
+  }
+}
+
+/* 高分辨率屏幕优化 */
+@media (min-resolution: 2dppx) {
+  .game-card {
+    border-width: 1.5px;
+  }
+  
+  .details-content .play-button {
+    border-bottom-width: 2px;
+  }
+}
+
+/* 减少动画效果（用户偏好） */
+@media (prefers-reduced-motion: reduce) {
+  .game-card,
+  .game-image img,
+  .details-content .play-button,
+  .details-content .close-button {
+    transition: none;
+  }
+  
+  .game-details-popup {
+    animation: none;
+  }
+  
+  .game-card:hover {
+    transform: none;
+  }
+  
+  .game-card:hover .game-image img {
+    transform: none;
   }
 }
 </style>

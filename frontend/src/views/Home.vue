@@ -1,14 +1,23 @@
 <template>
   <div class="home-page">
-    <!-- 顶部导航 -->
-    <header class="home-header">
+    <!-- 移动端导航 -->
+    <MobileNav 
+      :site-info="siteInfo"
+      :search-query="searchQuery"
+      @search="handleSearch"
+      @logout="handleLogout"
+      class="mobile-only"
+    />
+
+    <!-- 桌面端导航 -->
+    <header class="home-header desktop-only">
       <div class="header-content">
         <!-- Logo -->
         <div class="logo" @click="$router.push('/')">
           <span class="logo-text">{{ siteInfo.siteName }}</span>
         </div>
         
-        <!-- 搜索�?-->
+        <!-- 搜索框 -->
         <div class="search-container">
           <input
             v-model="searchQuery"
@@ -22,15 +31,15 @@
           </div>
         </div>
         
-        <!-- 用户操作�?-->
+        <!-- 用户操作区 -->
         <div class="user-actions">
-          <!-- 未登录状�?-->
+          <!-- 未登录状态 -->
           <div v-if="!authStore.isAuthenticated" class="auth-buttons">
             <router-link to="/login" class="login-btn">登录</router-link>
             <router-link to="/register" class="register-btn">注册</router-link>
           </div>
           
-          <!-- 已登录状�?-->
+          <!-- 已登录状态 -->
           <div v-else class="user-profile" @click="toggleUserMenu">
             <div class="user-avatar">{{ userAvatarText }}</div>
             <div v-if="showUserMenu" class="user-dropdown">
@@ -97,6 +106,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/store/auth'
 import { msg, TextEx } from '@/utils/message'
 import GameCard from '@/components/GameCard.vue'
+import MobileNav from '@/components/MobileNav.vue'
 import { getUserProfile } from '@/api/user'
 import { getPublishedGameList, checkGameAccess } from '@/api/game'
 import type { Game } from '@/types/game'
@@ -283,6 +293,7 @@ onBeforeUnmount(() => {
   background-attachment: fixed;
 }
 
+/* 桌面端导航样式 */
 .home-header {
   position: fixed;
   top: 0;
@@ -307,7 +318,7 @@ onBeforeUnmount(() => {
 
 .logo {
   cursor: pointer;
-  transform: translate(-5px, 2px); /* 向左下方微调 */
+  transform: translate(-5px, 2px);
   
   .logo-text {
     font-family: 'ZSFT-dd', cursive;
@@ -323,7 +334,6 @@ onBeforeUnmount(() => {
     }
   }
 }
-
 
 .search-container {
   position: relative;
@@ -422,10 +432,14 @@ onBeforeUnmount(() => {
     height: 45px;
     border-radius: 50%;
     border: 3px solid #ff4081;
+    background: linear-gradient(135deg, #ff4081, #ff80ab);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.2rem;
     transition: all 0.3s ease;
-    object-fit: cover; /* 确保图片内容充满圆形而不变形 */
-    display: block; /* 移除图片底部的额外空�?*/
-    background-color: #ffcdd2; /* 为文字头像添加背景色 */
     
     &:hover {
       border-color: #f50057;
@@ -463,10 +477,6 @@ onBeforeUnmount(() => {
     background: rgba(255, 128, 171, 0.1);
     color: #ff4081;
   }
-  
-  .item-icon {
-    font-size: 1.1rem;
-  }
 }
 
 @keyframes fadeInDown {
@@ -480,48 +490,81 @@ onBeforeUnmount(() => {
   }
 }
 
+/* 主内容区 */
 .main-content {
-  padding-top: 100px; // 为固定顶栏留空间
+  padding-top: 100px;
   min-height: 100vh;
+  
+  /* 移动端调整 */
+  @media (max-width: 767px) {
+    padding-top: 80px; /* 为移动端导航留空间 */
+  }
 }
 
 .content-container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 40px 20px;
+  
+  @media (max-width: 767px) {
+    padding: 20px 15px;
+  }
 }
 
 .welcome-section {
   text-align: center;
   margin-bottom: 50px;
-  height: 80px; /* 增加一些高度以保持布局稳定 */
+  height: 80px;
   display: flex;
   align-items: center;
   justify-content: center;
+  
+  @media (max-width: 767px) {
+    height: auto;
+    margin-bottom: 30px;
+  }
 }
 
 .welcome-subtitle {
-  font-size: 1.5rem; /* 调整为小�?*/
+  font-size: 1.5rem;
   color: rgba(255, 255, 255, 0.95);
   margin: 0;
   text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.6);
   font-weight: 600;
+  
+  @media (max-width: 767px) {
+    font-size: 1.2rem;
+  }
+  
+  @media (max-width: 479px) {
+    font-size: 1rem;
+  }
 }
 
-@keyframes glow {
-  from {
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 64, 129, 0.5);
-  }
-  to {
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5), 0 0 30px rgba(255, 64, 129, 0.8);
-  }
-}
-
+/* 游戏网格 - 使用我们的响应式栅格系统 */
 .games-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 30px;
   margin-bottom: 50px;
+  
+  /* 平板设备 */
+  @media (max-width: 1023px) and (min-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+  
+  /* 移动设备 */
+  @media (max-width: 767px) {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    margin-bottom: 30px;
+  }
+  
+  /* 超小屏设备 */
+  @media (max-width: 479px) {
+    gap: 15px;
+  }
 }
 
 .empty-state {
@@ -529,6 +572,10 @@ onBeforeUnmount(() => {
   justify-content: center;
   align-items: center;
   min-height: 300px;
+  
+  @media (max-width: 767px) {
+    min-height: 200px;
+  }
 }
 
 .empty-content {
@@ -539,9 +586,21 @@ onBeforeUnmount(() => {
   border: 3px solid #ff80ab;
   max-width: 400px;
   
+  @media (max-width: 767px) {
+    padding: 30px;
+    margin: 0 15px;
+    max-width: none;
+    border-radius: 15px;
+  }
+  
   .empty-icon {
     font-size: 4rem;
     margin-bottom: 20px;
+    
+    @media (max-width: 767px) {
+      font-size: 3rem;
+      margin-bottom: 15px;
+    }
   }
   
   h3 {
@@ -549,122 +608,102 @@ onBeforeUnmount(() => {
     color: #ff4081;
     margin: 0 0 15px 0;
     font-size: 1.5rem;
+    
+    @media (max-width: 767px) {
+      font-size: 1.2rem;
+    }
   }
   
   p {
     color: #666;
     margin: 0;
     font-size: 1rem;
+    
+    @media (max-width: 767px) {
+      font-size: 0.9rem;
+    }
   }
 }
 
-// 响应式设�?
-@media (max-width: 1024px) {
-  .header-content {
-    padding: 0 20px;
+/* 响应式隐藏/显示类 */
+.desktop-only {
+  @media (max-width: 767px) {
+    display: none !important;
   }
-  
+}
+
+.mobile-only {
+  @media (min-width: 768px) {
+    display: none !important;
+  }
+}
+
+/* 桌面端响应式调整 */
+@media (min-width: 1024px) and (max-width: 1199px) {
+  .header-content {
+    padding: 0 30px;
+  }
   
   .search-container {
-    max-width: 200px;
-    margin: 0 20px;
+    max-width: 250px;
   }
-  
-  .welcome-title {
-    font-size: 2.5rem;
-  }
-  
+}
+
+/* 大屏幕优化 */
+@media (min-width: 1200px) {
   .games-grid {
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 40px;
   }
 }
 
-@media (max-width: 768px) {
-  .header-content {
-    flex-wrap: nowrap; // 改为不换�?
-    height: auto;
-    padding: 15px 20px;
-    gap: 15px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+/* 超小屏设备特殊优化 */
+@media (max-width: 379px) {
+  .content-container {
+    padding: 15px 10px;
   }
   
-  .logo {
-    order: 1; // Logo 第一�?
-    flex: 0 0 auto;
+  .welcome-subtitle {
+    font-size: 0.9rem;
+    padding: 0 10px;
   }
   
-  .search-container {
-    order: 2; // 搜索框第二个（中间）
-    flex: 1;
-    max-width: 180px; // 减小搜索框宽度适应手机
-    margin: 0 15px; // 左右边距
+  .empty-content {
+    padding: 20px 15px;
   }
-  
-  .user-actions {
-    order: 3; // 用户操作区第三个（最右边�?
-    flex: 0 0 auto;
-  }
-  
+}
+
+/* 处理横屏手机 */
+@media (max-height: 500px) and (orientation: landscape) {
   .main-content {
-    padding-top: 120px;
+    padding-top: 70px;
   }
   
-  .welcome-title {
-    font-size: 2rem;
-  }
-  
-  .games-grid {
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 15px;
-  }
-  
-  .games-dropdown,
-  .user-dropdown {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 90%;
-    max-width: 300px;
-  }
-}
-
-@media (max-width: 480px) {
-  .logo .logo-text {
-    font-size: 1.5rem;
-  }
-  
-  
-  .search-input {
-    padding: 10px 15px;
-    font-size: 0.8rem;
-  }
-  
-  .auth-buttons a {
-    padding: 8px 15px;
-    font-size: 0.8rem;
-  }
-  
-  .welcome-title {
-    font-size: 1.8rem;
+  .welcome-section {
+    height: auto;
+    margin-bottom: 20px;
   }
   
   .welcome-subtitle {
     font-size: 1rem;
   }
-  
-  .games-grid {
-    grid-template-columns: 1fr; /* 在小屏幕上每行显示一个卡�?*/
-    gap: 20px;
-    max-width: 400px; /* 限制最大宽度，居中显示 */
-    margin: 0 auto; /* 居中对齐 */
+}
+
+/* 为触摸设备优化点击区域 */
+@media (hover: none) and (pointer: coarse) {
+  .auth-buttons a,
+  .user-profile,
+  .dropdown-item {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   
-  .content-container {
-    padding: 30px 15px;
+  .logo {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
   }
 }
 </style>

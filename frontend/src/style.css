@@ -1,5 +1,8 @@
 @import url("https://fontsapi.zeoseven.com/221/main/result.css");
 
+/* 导入响应式样式 */
+@import "./styles/responsive.css";
+
 /* CSS Reset */
 html,
 body,
@@ -16,6 +19,9 @@ body,
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* 防止移动端缩放 */
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
 }
 
 *,
@@ -32,9 +38,6 @@ select {
 }
 
 /* 管理后台样式 */
-.admin-layout {
-}
-
 .admin-layout .el-container {
   min-height: 100vh;
 }

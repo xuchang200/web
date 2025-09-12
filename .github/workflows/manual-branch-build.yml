@@ -1,0 +1,138 @@
+name: Manual Branch Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: '要构建的分支名称'
+        required: true
+        default: 'main'
+        type: string
+      tag_suffix:
+        description: '自定义标签后缀 (可选)'
+        required: false
+        type: string
+      push_to_registry:
+        description: '是否推送到镜像仓库'
+        required: true
+        default: true
+        type: boolean
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: xuchang200/web
+
+jobs:
+  manual-build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - name: Checkout specified branch
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.inputs.branch }}
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to Container Registry
+      if: ${{ github.event.inputs.push_to_registry == 'true' }}
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Generate custom tags
+      id: tags
+      run: |
+        BRANCH_NAME=${{ github.event.inputs.branch }}
+        SAFE_BRANCH_NAME=$(echo "${BRANCH_NAME}" | sed 's/[^a-zA-Z0-9._-]/-/g')
+        
+        # 基础标签
+        TAGS="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${SAFE_BRANCH_NAME}"
+        
+        # 添加时间戳标签
+        TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+        TAGS="${TAGS},${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${SAFE_BRANCH_NAME}-${TIMESTAMP}"
+        
+        # 添加 SHA 标签
+        SHA_SHORT=$(echo "${{ github.sha }}" | cut -c1-7)
+        TAGS="${TAGS},${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${SAFE_BRANCH_NAME}-${SHA_SHORT}"
+        
+        # 如果有自定义后缀
+        if [ ! -z "${{ github.event.inputs.tag_suffix }}" ]; then
+          TAGS="${TAGS},${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${SAFE_BRANCH_NAME}-${{ github.event.inputs.tag_suffix }}"
+        fi
+        
+        # 如果是主分支，添加 latest 标签
+        if [ "${BRANCH_NAME}" = "main" ] || [ "${BRANCH_NAME}" = "master" ]; then
+          TAGS="${TAGS},${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
+        fi
+        
+        echo "tags=${TAGS}" >> $GITHUB_OUTPUT
+        echo "safe_branch_name=${SAFE_BRANCH_NAME}" >> $GITHUB_OUTPUT
+
+    - name: Create .env file for build
+      run: |
+        cat << 'EOF' > .env
+        # Frontend Environment Variables
+        VITE_API_URL=/api
+        VITE_APP_NAME=Personal Game Website
+        VITE_APP_VERSION=${{ github.event.inputs.branch }}-${{ github.run_number }}
+        
+        # Backend Environment Variables (build-time only)
+        DATABASE_URL=postgresql://user:password@localhost:5432/gamedb
+        JWT_SECRET=build-time-secret
+        REDIS_URL=redis://localhost:6379
+        NODE_ENV=production
+        
+        # Upload Configuration
+        UPLOAD_MAX_SIZE=10485760
+        UPLOAD_ALLOWED_TYPES=jpg,jpeg,png,gif,zip
+        EOF
+
+    - name: Build Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        platforms: linux/amd64,linux/arm64
+        push: ${{ github.event.inputs.push_to_registry == 'true' }}
+        tags: ${{ steps.tags.outputs.tags }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        labels: |
+          org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+          org.opencontainers.image.revision=${{ github.sha }}
+          org.opencontainers.image.created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+          org.opencontainers.image.title=Personal Game Website
+          org.opencontainers.image.description=Manual build from branch ${{ github.event.inputs.branch }}
+
+    - name: Create build summary
+      run: |
+        echo "## 🔨 手动构建完成" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "- **分支**: \`${{ github.event.inputs.branch }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "- **提交**: \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "- **构建时间**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+        echo "- **推送到仓库**: ${{ github.event.inputs.push_to_registry }}" >> $GITHUB_STEP_SUMMARY
+        
+        if [ "${{ github.event.inputs.push_to_registry }}" = "true" ]; then
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 生成的镜像标签" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.tags.outputs.tags }}" | tr ',' '\n' >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🚀 使用方法" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "# 拉取镜像" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.tags.outputs.safe_branch_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "# 运行容器" >> $GITHUB_STEP_SUMMARY
+          echo "docker run -p 3000:3000 ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.tags.outputs.safe_branch_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+        fi

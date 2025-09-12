@@ -1,5 +1,11 @@
 <template>
   <div class="profile-page">
+    <!-- 移动端导航 -->
+    <MobileNav 
+      :site-info="{ siteName: 'withU' }"
+      class="mobile-only"
+    />
+    
     <!-- 页面标题 -->
     <div class="page-header">
       <h1 class="page-title">个人中心</h1>
@@ -10,7 +16,7 @@
     <div class="profile-content">
       <el-row :gutter="24">
         <!-- 左侧用户信息卡片 -->
-        <el-col :span="8">
+        <el-col :xs="24" :sm="24" :md="8" :lg="8" :xl="8">
           <el-card class="user-info-card">
             <template #header>
               <div class="card-header">
@@ -92,7 +98,7 @@
         </el-col>
 
         <!-- 右侧我的游戏列表 -->
-        <el-col :span="16">
+        <el-col :xs="24" :sm="24" :md="16" :lg="16" :xl="16">
           <el-card class="games-card">
             <template #header>
               <div class="card-header">
@@ -220,6 +226,7 @@ import { ref, reactive, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { msg, TextEx } from '@/utils/message'
 import { confirmAction } from '@/utils/confirm'
+import MobileNav from '@/components/MobileNav.vue'
 import {
   User, UserFilled, Lock, SwitchButton, Key, CircleCheck, 
   InfoFilled, VideoPlay, Picture, Calendar

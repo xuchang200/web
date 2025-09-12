@@ -1,0 +1,430 @@
+/* 响应式断点定义 */
+:root {
+  /* 断点变量 */
+  --breakpoint-xs: 480px;   /* 超小屏手机 */
+  --breakpoint-sm: 768px;   /* 小屏手机/平板 */
+  --breakpoint-md: 1024px;  /* 中等屏幕平板/小桌面 */
+  --breakpoint-lg: 1200px;  /* 大屏桌面 */
+  --breakpoint-xl: 1440px;  /* 超大屏桌面 */
+  
+  /* 容器宽度 */
+  --container-xs: 100%;
+  --container-sm: 100%;
+  --container-md: 100%;
+  --container-lg: 1200px;
+  --container-xl: 1320px;
+  
+  /* 间距变量 */
+  --spacing-xs: 8px;
+  --spacing-sm: 12px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-xxl: 48px;
+  
+  /* 字体大小 */
+  --font-size-xs: 0.75rem;   /* 12px */
+  --font-size-sm: 0.875rem;  /* 14px */
+  --font-size-base: 1rem;    /* 16px */
+  --font-size-lg: 1.125rem;  /* 18px */
+  --font-size-xl: 1.25rem;   /* 20px */
+  --font-size-2xl: 1.5rem;   /* 24px */
+  --font-size-3xl: 1.875rem; /* 30px */
+  --font-size-4xl: 2.25rem;  /* 36px */
+}
+
+/* 全局响应式基础样式 */
+html {
+  /* 确保在移动设备上禁用横向滚动 */
+  overflow-x: hidden;
+}
+
+body {
+  /* 确保在移动设备上禁用横向滚动 */
+  overflow-x: hidden;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* 通用容器类 */
+.container {
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--spacing-md);
+  padding-right: var(--spacing-md);
+}
+
+/* 响应式工具类 */
+.hidden-xs { display: block; }
+.hidden-sm { display: block; }
+.hidden-md { display: block; }
+.hidden-lg { display: block; }
+.hidden-xl { display: block; }
+
+.visible-xs { display: none; }
+.visible-sm { display: none; }
+.visible-md { display: none; }
+.visible-lg { display: none; }
+.visible-xl { display: none; }
+
+/* 响应式栅格系统 */
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-left: calc(var(--spacing-md) * -0.5);
+  margin-right: calc(var(--spacing-md) * -0.5);
+}
+
+.col {
+  flex: 1;
+  padding-left: calc(var(--spacing-md) * 0.5);
+  padding-right: calc(var(--spacing-md) * 0.5);
+}
+
+/* 响应式文本对齐 */
+.text-center-mobile { text-align: left; }
+.text-left-mobile { text-align: left; }
+
+/* ==========================================================================
+   移动设备优先的媒体查询
+   ========================================================================== */
+
+/* 超小屏设备 (小于480px) */
+@media (max-width: 479px) {
+  .container {
+    padding-left: var(--spacing-sm);
+    padding-right: var(--spacing-sm);
+  }
+  
+  .hidden-xs { display: none !important; }
+  .visible-xs { display: block !important; }
+  
+  .text-center-mobile { text-align: center; }
+  
+  /* 调整间距 */
+  .row {
+    margin-left: calc(var(--spacing-sm) * -0.5);
+    margin-right: calc(var(--spacing-sm) * -0.5);
+  }
+  
+  .col {
+    padding-left: calc(var(--spacing-sm) * 0.5);
+    padding-right: calc(var(--spacing-sm) * 0.5);
+  }
+}
+
+/* 小屏设备 (480px 到 767px) */
+@media (min-width: 480px) and (max-width: 767px) {
+  .container {
+    max-width: var(--container-sm);
+  }
+  
+  .hidden-sm { display: none !important; }
+  .visible-sm { display: block !important; }
+}
+
+/* 中等屏幕设备 (768px 到 1023px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .container {
+    max-width: var(--container-md);
+    padding-left: var(--spacing-lg);
+    padding-right: var(--spacing-lg);
+  }
+  
+  .hidden-md { display: none !important; }
+  .visible-md { display: block !important; }
+}
+
+/* 大屏设备 (1024px 到 1199px) */
+@media (min-width: 1024px) and (max-width: 1199px) {
+  .container {
+    max-width: var(--container-lg);
+    padding-left: var(--spacing-xl);
+    padding-right: var(--spacing-xl);
+  }
+  
+  .hidden-lg { display: none !important; }
+  .visible-lg { display: block !important; }
+}
+
+/* 超大屏设备 (1200px 及以上) */
+@media (min-width: 1200px) {
+  .container {
+    max-width: var(--container-xl);
+    padding-left: var(--spacing-xl);
+    padding-right: var(--spacing-xl);
+  }
+  
+  .hidden-xl { display: none !important; }
+  .visible-xl { display: block !important; }
+}
+
+/* ==========================================================================
+   移动设备专用样式
+   ========================================================================== */
+
+/* 移动设备通用样式 (768px以下) */
+@media (max-width: 767px) {
+  /* 确保移动端viewport正确 */
+  html {
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+  }
+  
+  /* 移动端字体大小调整 */
+  body {
+    font-size: var(--font-size-sm);
+    line-height: 1.6;
+  }
+  
+  /* 移动端按钮样式 */
+  button, .btn {
+    min-height: 44px; /* 符合移动端触摸目标最小尺寸 */
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: var(--font-size-base);
+  }
+  
+  /* 移动端输入框样式 */
+  input, textarea, select {
+    min-height: 44px;
+    font-size: var(--font-size-base); /* 防止iOS自动缩放 */
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+  
+  /* 移动端链接样式 */
+  a {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+  
+  /* 移动端图片响应式 */
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+  
+  /* 移动端表格响应式 */
+  table {
+    width: 100%;
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  
+  /* 移动端隐藏元素 */
+  .desktop-only {
+    display: none !important;
+  }
+  
+  .mobile-only {
+    display: block !important;
+  }
+}
+
+/* 桌面设备样式 (768px以上) */
+@media (min-width: 768px) {
+  .desktop-only {
+    display: block !important;
+  }
+  
+  .mobile-only {
+    display: none !important;
+  }
+}
+
+/* ==========================================================================
+   游戏卡片响应式样式
+   ========================================================================== */
+
+/* 游戏网格响应式 */
+.games-grid {
+  display: grid;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-lg);
+}
+
+/* 移动端：单列布局 */
+@media (max-width: 767px) {
+  .games-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+    padding: var(--spacing-sm);
+  }
+}
+
+/* 平板端：双列布局 */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .games-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-lg);
+  }
+}
+
+/* 桌面端：三列或更多 */
+@media (min-width: 1024px) {
+  .games-grid {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: var(--spacing-xl);
+  }
+}
+
+/* ==========================================================================
+   表单响应式样式
+   ========================================================================== */
+
+.form-container {
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  padding: var(--spacing-lg);
+}
+
+@media (max-width: 767px) {
+  .form-container {
+    max-width: 100%;
+    padding: var(--spacing-md);
+  }
+}
+
+/* ==========================================================================
+   导航栏响应式样式
+   ========================================================================== */
+
+/* 移动端导航栏基础样式 */
+@media (max-width: 767px) {
+  .nav-mobile {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 var(--spacing-md);
+    border-bottom: 1px solid rgba(255, 128, 171, 0.2);
+  }
+  
+  .nav-mobile .logo {
+    font-size: var(--font-size-xl);
+    font-weight: bold;
+    color: #ff4081;
+  }
+  
+  .nav-mobile .menu-toggle {
+    background: none;
+    border: none;
+    font-size: var(--font-size-xl);
+    color: #ff4081;
+    cursor: pointer;
+    padding: var(--spacing-sm);
+  }
+  
+  .nav-mobile-menu {
+    position: fixed;
+    top: 60px;
+    left: 0;
+    right: 0;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 128, 171, 0.2);
+    transform: translateY(-100%);
+    transition: transform 0.3s ease;
+    z-index: 999;
+  }
+  
+  .nav-mobile-menu.open {
+    transform: translateY(0);
+  }
+  
+  .nav-mobile-menu .menu-items {
+    display: flex;
+    flex-direction: column;
+    padding: var(--spacing-md);
+  }
+  
+  .nav-mobile-menu .menu-item {
+    padding: var(--spacing-md);
+    border-bottom: 1px solid rgba(255, 128, 171, 0.1);
+    text-decoration: none;
+    color: #333;
+    font-size: var(--font-size-base);
+  }
+  
+  .nav-mobile-menu .menu-item:last-child {
+    border-bottom: none;
+  }
+  
+  .nav-mobile-menu .menu-item:hover {
+    background: rgba(255, 128, 171, 0.1);
+    color: #ff4081;
+  }
+}
+
+/* ==========================================================================
+   工具类
+   ========================================================================== */
+
+/* 间距工具类 */
+.p-xs { padding: var(--spacing-xs); }
+.p-sm { padding: var(--spacing-sm); }
+.p-md { padding: var(--spacing-md); }
+.p-lg { padding: var(--spacing-lg); }
+.p-xl { padding: var(--spacing-xl); }
+
+.m-xs { margin: var(--spacing-xs); }
+.m-sm { margin: var(--spacing-sm); }
+.m-md { margin: var(--spacing-md); }
+.m-lg { margin: var(--spacing-lg); }
+.m-xl { margin: var(--spacing-xl); }
+
+/* 文本大小工具类 */
+.text-xs { font-size: var(--font-size-xs); }
+.text-sm { font-size: var(--font-size-sm); }
+.text-base { font-size: var(--font-size-base); }
+.text-lg { font-size: var(--font-size-lg); }
+.text-xl { font-size: var(--font-size-xl); }
+.text-2xl { font-size: var(--font-size-2xl); }
+.text-3xl { font-size: var(--font-size-3xl); }
+.text-4xl { font-size: var(--font-size-4xl); }
+
+/* Flexbox工具类 */
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.flex-row { flex-direction: row; }
+.flex-wrap { flex-wrap: wrap; }
+.flex-nowrap { flex-wrap: nowrap; }
+.justify-center { justify-content: center; }
+.justify-between { justify-content: space-between; }
+.justify-around { justify-content: space-around; }
+.align-center { align-items: center; }
+.align-start { align-items: flex-start; }
+.align-end { align-items: flex-end; }
+
+/* 显示工具类 */
+.block { display: block; }
+.inline { display: inline; }
+.inline-block { display: inline-block; }
+.hidden { display: none; }
+
+/* 位置工具类 */
+.relative { position: relative; }
+.absolute { position: absolute; }
+.fixed { position: fixed; }
+.sticky { position: sticky; }
+
+/* 宽度工具类 */
+.w-full { width: 100%; }
+.w-auto { width: auto; }
+.w-fit { width: fit-content; }
+
+/* 高度工具类 */
+.h-full { height: 100%; }
+.h-auto { height: auto; }
+.h-screen { height: 100vh; }
