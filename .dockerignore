@@ -4,7 +4,8 @@
 .gitattributes
 
 # 排除文档文件
-*.md
+# *.md
+!README.md
 docs/
 *.txt
 
@@ -59,3 +60,11 @@ uploadController_new.ts
 *.swp
 *.swo
 *~
+
+# 额外忽略
+.dockerignore
+Dockerfile*
+frontend/src/**/*.map
+backend/src/**/*.map
+*.sqlite
+prisma/dev.db*

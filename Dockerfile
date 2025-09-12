@@ -9,7 +9,7 @@ WORKDIR /app/frontend
 COPY frontend/package*.json ./
 
 # 安装前端依赖
-RUN npm install
+RUN npm ci
 
 # 复制前端源代码
 COPY frontend/ ./
@@ -26,7 +26,7 @@ WORKDIR /app/backend
 COPY backend/package*.json ./
 
 # 安装后端依赖（包括 devDependencies 用于构建）
-RUN npm install
+RUN npm ci
 
 # 复制后端源代码
 COPY backend/ ./
@@ -35,7 +35,7 @@ COPY backend/ ./
 RUN npx prisma generate
 
 # 构建 TypeScript 代码
-RUN npx tsc
+RUN npm run build
 
 # 最终阶段: 运行时环境（保持同一 Node 版本，避免运行时不一致）
 FROM node:20-alpine AS production
@@ -47,10 +47,13 @@ RUN apk add --no-cache nginx
 WORKDIR /app
 
 # 复制后端构建产物
-COPY --from=backend-build /app/backend/dist ./backend/
-COPY --from=backend-build /app/backend/node_modules ./backend/node_modules/
+ENV NODE_ENV=production
+# 仅复制生产必要文件
+COPY --from=backend-build /app/backend/dist ./backend/dist
 COPY --from=backend-build /app/backend/package*.json ./backend/
 COPY --from=backend-build /app/backend/prisma ./backend/prisma/
+COPY --from=backend-build /app/backend/node_modules ./backend/node_modules
+RUN cd backend && npm prune --omit=dev
 
 # 复制前端构建产物到 nginx 目录
 COPY --from=frontend-build /app/frontend/dist /usr/share/nginx/html
@@ -71,4 +74,7 @@ RUN chown -R nginx:nginx /var/log/nginx /var/lib/nginx
 EXPOSE 80 3000
 
 # 启动脚本
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+	CMD wget -q -O - http://127.0.0.1/health || exit 1
+
 ENTRYPOINT ["/docker-entrypoint.sh"]

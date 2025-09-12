@@ -1,28 +1,35 @@
 #!/bin/sh
 
-# 启动脚本 - 用于在单个容器中运行前端和后端服务
+set -e
 
-echo "Starting container services..."
+echo "[entrypoint] Starting container services..."
 
-# 检查环境变量
 if [ -z "$DATABASE_URL" ]; then
-    echo "Warning: DATABASE_URL environment variable is not set"
+    echo "[entrypoint][warn] DATABASE_URL is not set"
 fi
 
-# 设置工作目录
 cd /app/backend
 
-# 运行数据库迁移（如果需要）
-echo "Running database migrations..."
-npx prisma migrate deploy || echo "Migration failed or no migrations to run"
+# 生成 Prisma 客户端（幂等）
+echo "[entrypoint] Generating Prisma client..."
+npx prisma generate
 
-# 启动 nginx（前端服务）
-echo "Starting nginx..."
-nginx &
+# 运行数据库迁移
+echo "[entrypoint] Running database migrations..."
+npx prisma migrate deploy || echo "[entrypoint][warn] Migration failed or none to run"
+
+# 若 dist 不存在（防御性）则构建
+if [ ! -d "dist" ]; then
+  echo "[entrypoint] dist not found, building backend..."
+  npm run build
+fi
+
+# 启动 nginx (仅当存在可执行文件)
+if command -v nginx >/dev/null 2>&1; then
+  echo "[entrypoint] Starting nginx..."
+  nginx
+fi
 
 # 启动后端服务
-echo "Starting backend service..."
-node server.js &
-
-# 等待所有后台进程
-wait
+echo "[entrypoint] Starting backend service..."
+exec npm run start
