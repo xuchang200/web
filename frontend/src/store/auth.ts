@@ -2,6 +2,16 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import type { User } from '@/types/user'; // 确保你的 User 类型路径正确
 
+// 结构校验：避免本地被篡改或旧版本缓存导致异常
+function isUser(obj: any): obj is User {
+  return !!obj && typeof obj === 'object'
+    && typeof obj.id === 'string'
+    && typeof obj.username === 'string'
+    && typeof obj.email === 'string'
+    && typeof obj.name === 'string'
+    && (obj.role === 'ADMIN' || obj.role === 'USER');
+}
+
 export const useAuthStore = defineStore('auth', () => {
   // --- State ---
   const token = ref<string | null>(null);
@@ -24,7 +34,14 @@ export const useAuthStore = defineStore('auth', () => {
     }
     if (storedUser) {
       try {
-        user.value = JSON.parse(storedUser);
+        const parsed = JSON.parse(storedUser);
+        if (isUser(parsed)) {
+          user.value = parsed;
+        } else {
+          // 不符合结构，清除
+            localStorage.removeItem('user');
+            user.value = null;
+        }
       } catch (e) {
         console.error('Failed to parse user from localStorage', e);
         // 解析失败则清除，避免应用出错
@@ -41,6 +58,12 @@ export const useAuthStore = defineStore('auth', () => {
    */
   const setLoginInfo = (newToken: string, newUser: User) => {
     token.value = newToken;
+    // 这里做一次浅校验，防止后端响应缺少关键字段
+    if (!isUser(newUser)) {
+      console.warn('Received invalid user payload, forcing logout safeguard.');
+      logout();
+      return;
+    }
     user.value = newUser;
     localStorage.setItem('token', newToken);
     localStorage.setItem('user', JSON.stringify(newUser));
