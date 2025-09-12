@@ -10,6 +10,10 @@ export interface UserInfo {
   activatedGamesCount: number
 }
 
+// 兼容历史代码中使用的 User 类型名（auth store 等）。
+// 若后续需要拓展，可直接在这里修改结构。
+export type User = UserInfo;
+
 export interface UserGame {
   id: number
   title: string

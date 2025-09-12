@@ -218,7 +218,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { msg, Text, TextEx } from '@/utils/message'
+import { msg, TextEx } from '@/utils/message'
 import { confirmAction } from '@/utils/confirm'
 import {
   User, UserFilled, Lock, SwitchButton, Key, CircleCheck, 

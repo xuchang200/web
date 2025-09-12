@@ -24,15 +24,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { 
-  User, 
-  VideoPlay, 
-  Key, 
-  TrendCharts, 
-  ArrowUp, 
-  ArrowDown, 
-  Minus 
-} from '@element-plus/icons-vue';
+import { ArrowUp, ArrowDown, Minus } from '@element-plus/icons-vue';
 
 interface Props {
   title: string;

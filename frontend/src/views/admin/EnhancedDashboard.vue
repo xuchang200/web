@@ -76,7 +76,7 @@
         <el-card class="metric-card security">
           <div class="metric-content">
             <div class="metric-icon">
-              <el-icon size="32"><Shield /></el-icon>
+              <el-icon size="32"><Warning /></el-icon>
             </div>
             <div class="metric-data">
               <h3>{{ securityStats.loginFailures }}</h3>
@@ -190,7 +190,7 @@
               </div>
               <div class="pattern-progress">
                 <el-progress 
-                  :percentage="parseFloat(pattern.completionRate)" 
+                  :percentage="parseFloat(String(pattern.completionRate))" 
                   :stroke-width="6"
                   :show-text="false"
                 />
@@ -252,7 +252,7 @@
             </div>
             <div class="security-item">
               <div class="security-icon security-incident">
-                <el-icon><Shield /></el-icon>
+                <el-icon><CircleClose /></el-icon>
               </div>
               <div class="security-info">
                 <h4>{{ securityStats.securityIncidents }}</h4>
@@ -314,7 +314,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, nextTick } from 'vue'
 import { 
-  Money, User, TrendCharts, Shield, Refresh, Warning, 
+  Money, User, TrendCharts, Refresh, Warning, 
   CircleClose, Tools 
 } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
@@ -359,11 +359,16 @@ const securityStats = reactive({
   systemErrors: 0
 })
 
-const gamePerformanceData = ref([])
-const gameUsagePatterns = ref([])
-const geoDistribution = ref([])
-const recentActivities = ref([])
-const activityHeatmapData = ref([])
+interface GamePerformanceRow { id: string; name: string; activationCount: number; uniqueActivatedUsers: number; marketShare: string | number; playToActivationRatio: string | number; status: string }
+interface GameUsagePattern { gameId: string; gameName: string; playStartCount: number; completionRate: string | number; uniquePlayers: number }
+interface GeoDistributionItem { ip: string; region: string; loginCount: number }
+interface RecentActivityItem { id: string; createdAt: string; type: string; message: string; username?: string; gameName?: string; ip?: string }
+interface ActivityHeatmapPoint { hour: number; loginCount: number; activationCount: number; playCount: number }
+const gamePerformanceData = ref<GamePerformanceRow[]>([])
+const gameUsagePatterns = ref<GameUsagePattern[]>([])
+const geoDistribution = ref<GeoDistributionItem[]>([])
+const recentActivities = ref<RecentActivityItem[]>([])
+const activityHeatmapData = ref<ActivityHeatmapPoint[]>([])
 
 // 图表引用
 const activationTrendChart = ref()
@@ -437,9 +442,7 @@ const initActivityHeatmapChart = (data: any) => {
   const chart = echarts.init(activityHeatmapChart.value)
   
   const hours = Array.from({ length: 24 }, (_, i) => `${i}:00`)
-  const maxValue = Math.max(...data.map((item: any) => 
-    item.loginCount + item.activationCount + item.playCount
-  ))
+  // removed unused maxValue to avoid TS6133
   
   const option = {
     title: {

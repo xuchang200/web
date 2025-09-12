@@ -118,16 +118,15 @@ const userAvatarText = computed(() => {
 // 获取用户详细信息
 const fetchUserProfile = async () => {
   if (!authStore.isAuthenticated) return
-  
   try {
     const response = await getUserProfile()
     userProfile.value = response.data
   } catch (error) {
     console.error('获取用户信息失败:', error)
-    // 如果获取用户信息失败，可能是token过期
-  msg.error(TextEx.loadUserFail + '，请重新登录', 'home-load-user-fail')
+    msg.error(TextEx.loadUserFail + '，请重新登录', 'home-load-user-fail')
   }
 }
+
 const searchQuery = ref('')
 const showGamesList = ref(false)
 const showUserMenu = ref(false)
@@ -137,27 +136,25 @@ const fetchGames = async () => {
   loading.value = true
   try {
     const response = await getPublishedGameList()
-    // 将数据库字段映射到前端期望的字段
     games.value = response.data.games.map((game: any) => ({
       id: game.id,
-      title: game.name, // 数据库中�?name，前端用 title
+      title: game.name,
       description: game.description || '暂无描述',
       coverImage: game.coverImage || `https://via.placeholder.com/300x200/ff80ab/ffffff?text=${encodeURIComponent(game.name)}`,
       playCount: game.playCount,
-      rating: 4.5, // 暂时使用默认评分，因为数据库没有这个字段
+      rating: 4.5,
       path: game.path,
       activationCount: game.activationCount
     }))
   } catch (error) {
     console.error('获取游戏列表失败:', error)
-  msg.error(TextEx.loadGamesFail, 'home-load-games-fail')
+    msg.error(TextEx.loadGamesFail, 'home-load-games-fail')
   } finally {
     loading.value = false
   }
 }
 
-// 计算属�?
-const featuredGames = computed(() => games.value.slice(0, 3))
+// （已移除未使用的 featuredGames 计算属性）
 
 const filteredGames = computed(() => {
   if (!searchQuery.value) return games.value
@@ -170,11 +167,7 @@ const filteredGames = computed(() => {
 
 const displayedGames = computed(() => filteredGames.value)
 
-// 方法
-const toggleGamesList = () => {
-  showGamesList.value = !showGamesList.value
-  showUserMenu.value = false
-}
+// 方法（移除未使用的 toggleGamesList）
 
 const toggleUserMenu = () => {
   showUserMenu.value = !showUserMenu.value
