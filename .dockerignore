@@ -1,0 +1,61 @@
+# 排除版本控制文件
+.git
+.gitignore
+.gitattributes
+
+# 排除文档文件
+*.md
+docs/
+*.txt
+
+# 排除开发环境配置
+.env
+.env.local
+.env.development
+.env.test
+.vscode/
+.idea/
+
+# 排除依赖和构建缓存
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn
+
+# 排除构建产物（因为我们在 Docker 内构建）
+frontend/dist/
+backend/dist/
+backend/build/
+
+# 排除测试文件
+**/*.test.js
+**/*.test.ts
+**/*.spec.js
+**/*.spec.ts
+coverage/
+.nyc_output
+
+# 排除临时文件
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+
+# 排除日志文件
+logs/
+*.log
+
+# 排除上传文件（这些应该通过 volume 挂载）
+backend/uploads/
+
+# 排除无用的文件夹和文件
+test-game-folder/
+Redis-x64-3.0.504/
+uploadController_new.ts
+
+# 排除其他无关文件
+*.swp
+*.swo
+*~
