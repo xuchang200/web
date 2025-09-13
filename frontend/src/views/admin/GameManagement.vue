@@ -558,32 +558,17 @@ const handleTest = (row: Game) => {
     return
   }
   
-  // 简洁的游戏访问URL，后端会进行权限检查
-  const apiBase = (import.meta as any).env?.VITE_API_BASE_URL as string | undefined;
-  let baseUrl = '';
-  
-  if (apiBase && /^https?:\/\//i.test(apiBase)) {
-    try {
-      const url = new URL(apiBase);
-      let pathname = url.pathname.replace(/\/$/, '');
-      if (pathname.endsWith('/api')) {
-        pathname = pathname.slice(0, -4);
-      }
-      baseUrl = url.origin + (pathname === '/' ? '' : pathname);
-    } catch {
-      baseUrl = window.location.origin;
-    }
-  } else {
-    baseUrl = window.location.origin;
-  }
-  
-  // 将 token 以查询参数附带，便于新窗口直接访问
-  // 静态导入 store（模块顶层已导入），这里直接使用
-  // 为了在此处可用，将上方 import 中添加: `import { useAuthStore } from '@/store/auth'`
+  // 直接访问后端游戏路由，避免与前端路由冲突
   const authStore = useAuthStore();
   const token = (authStore as any).token as string | undefined;
-  // 添加测试模式标识，这样游戏页面就知道这是管理员测试
-  const gameUrl = `${baseUrl}/game/${row.id}?test=1${token ? `&token=${encodeURIComponent(token)}` : ''}`;
+  
+  // 构建查询参数
+  const params = new URLSearchParams();
+  if (token) params.set('token', token);
+  params.set('test', '1');
+  
+  // 直接访问后端游戏路由
+  const gameUrl = `/game/${row.id}?${params.toString()}`;
   window.open(gameUrl, '_blank');
 }
 

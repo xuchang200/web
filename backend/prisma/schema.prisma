@@ -134,6 +134,7 @@ model UserGameActivation {
   
   // 激活时使用的激活码ID（可选，用于审计）
   activationCodeId String?
+  activationCode   ActivationCode? @relation(fields: [activationCodeId], references: [id], onDelete: SetNull)
   
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   game Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
@@ -142,6 +143,7 @@ model UserGameActivation {
   @@index([userId])
   @@index([gameId])
   @@index([activatedAt])
+  @@index([activationCodeId])
 }
 
 model ActivationCode {
@@ -157,6 +159,9 @@ model ActivationCode {
   user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
   userId String?
   logs   Log[]
+  
+  // 反向关系：被哪些用户游戏激活记录引用
+  userGameActivations UserGameActivation[]
 }
 
 model Log {
@@ -168,7 +173,7 @@ model Log {
   userId           String?
   game             Game?           @relation(fields: [gameId], references: [id])
   gameId           String?
-  activationCode   ActivationCode? @relation(fields: [activationCodeId], references: [id])
+  activationCode   ActivationCode? @relation(fields: [activationCodeId], references: [id], onDelete: SetNull)
   activationCodeId String?
 
   // 目标用户（例如管理员对用户进行操作时）

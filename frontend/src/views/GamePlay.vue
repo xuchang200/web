@@ -26,7 +26,7 @@
     </div>
 
     <!-- 游戏内容 -->
-    <div v-else-if="gameData" class="game-container">
+    <div v-else-if="gameData && gameUrl" class="game-container">
       <iframe
         ref="gameFrame"
         :src="gameUrl"
@@ -34,13 +34,14 @@
         frameborder="0"
         allowfullscreen
         @load="onGameLoaded"
+        @error="onGameError"
       ></iframe>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/store/auth'
 import { checkGameAccess, incrementPlayCount } from '@/api/game'
@@ -56,6 +57,7 @@ const loadingMessage = ref('正在检查访问权限...')
 const gameData = ref<any>(null)
 const gameFrame = ref<HTMLIFrameElement>()
 const hasAccess = ref(false)
+const gameLoaded = ref(false)
 
 // 计算游戏URL
 const gameUrl = ref('')
@@ -68,6 +70,9 @@ const playTimeTimer = ref<number | null>(null)
 const isPageVisible = ref(true)
 const accumulatedPlayTime = ref(0) // 累计游戏时间（排除页面不可见的时间）
 const lastVisibilityTime = ref<number | null>(null)
+
+// 防止重复调用的标志
+const isCheckingAccess = ref(false)
 
 // 检查是否为测试模式
 const checkTestMode = () => {
@@ -191,12 +196,22 @@ const stopGameTimer = () => {
 
 // 检查游戏访问权限
 const checkAccess = async () => {
+  // 防止重复调用
+  if (isCheckingAccess.value) {
+    console.log('正在检查访问权限，跳过重复调用')
+    return
+  }
+  
   try {
+    isCheckingAccess.value = true
     loading.value = true
     error.value = ''
+    gameLoaded.value = false
     loadingMessage.value = '正在检查访问权限...'
 
     const gameId = route.params.id as string
+    console.log('游戏ID:', gameId)
+    
     if (!gameId) {
       throw new Error('游戏ID无效')
     }
@@ -212,8 +227,11 @@ const checkAccess = async () => {
       throw new Error('请先登录后再游玩游戏')
     }
 
+    console.log('开始验证游戏访问权限...')
     // 验证游戏访问权限
     const response = await checkGameAccess(gameId)
+    console.log('访问权限验证响应:', response)
+    
     gameData.value = response.data
     hasAccess.value = response.data.hasAccess
 
@@ -221,45 +239,26 @@ const checkAccess = async () => {
       loadingMessage.value = '正在加载游戏资源...'
 
       // 构建游戏URL
-      const apiBase = (import.meta as any).env?.VITE_API_BASE_URL as string | undefined
-      let baseUrl = ''
-      
-      if (apiBase && /^https?:\/\//i.test(apiBase)) {
-        try {
-          const url = new URL(apiBase)
-          let pathname = url.pathname.replace(/\/$/, '')
-          if (pathname.endsWith('/api')) {
-            pathname = pathname.slice(0, -4)
-          }
-          baseUrl = url.origin + (pathname === '/' ? '' : pathname)
-        } catch {
-          baseUrl = window.location.origin
-        }
-      } else {
-        baseUrl = window.location.origin
-      }
+      const baseUrl = window.location.origin
 
-      // 构建游戏访问URL，带上认证token
+      // 构建游戏访问URL，带上认证token - 使用新的API路径避免路由冲突
       const token = authStore.token
       const queryParams = new URLSearchParams()
       if (token) queryParams.set('token', token)
       if (testMode) queryParams.set('test', '1')
       
-      gameUrl.value = `${baseUrl}/game/${gameId}?${queryParams.toString()}`
+      gameUrl.value = `${baseUrl}/api/game-content/${gameId}?${queryParams.toString()}`
+      console.log('游戏URL:', gameUrl.value)
 
-      // 如果是测试模式，发送测试请求但不计入播放次数
+      // 测试模式下不需要调用 incrementPlayCount
       if (testMode) {
-        try {
-          await incrementPlayCount(gameId, { isTest: true })
-          console.log('测试模式请求已发送')
-        } catch (error) {
-          console.error('测试模式请求失败:', error)
-        }
+        console.log('测试模式，跳过播放次数统计')
       }
       
       // 延迟一秒让用户看到加载状态
       setTimeout(() => {
         loading.value = false
+        console.log('游戏加载完成，开始显示游戏')
         // 只有在非测试模式下才开始时间跟踪
         if (!testMode) {
           startGameTimer()
@@ -284,12 +283,24 @@ const checkAccess = async () => {
     }
     
     loading.value = false
+  } finally {
+    isCheckingAccess.value = false
   }
 }
 
 // 游戏加载完成
 const onGameLoaded = () => {
-  console.log('游戏加载完成')
+  if (!gameLoaded.value) {
+    gameLoaded.value = true
+    console.log('游戏 iframe 加载完成')
+  }
+}
+
+// 游戏加载错误
+const onGameError = () => {
+  console.error('游戏 iframe 加载失败')
+  error.value = '游戏加载失败，请检查网络连接或稍后重试'
+  loading.value = false
 }
 
 // 返回首页
@@ -304,7 +315,22 @@ const goProfile = () => {
 
 // 重试
 const retry = () => {
-  checkAccess()
+  console.log('用户点击重试按钮')
+  // 重置所有状态 - 修复：设置loading为true显示加载状态
+  loading.value = true
+  error.value = ''
+  gameData.value = null
+  hasAccess.value = false
+  gameLoaded.value = false
+  gameUrl.value = ''
+  
+  // 停止之前的游戏时间跟踪
+  stopGameTimer()
+  
+  // 延迟一下再重新检查，避免立即重复调用
+  setTimeout(() => {
+    checkAccess()
+  }, 500)
 }
 
 // 处理键盘事件（ESC键退出全屏）
@@ -314,15 +340,49 @@ const handleKeydown = (event: KeyboardEvent) => {
   }
 }
 
+// 监听路由参数变化
+watch(
+  () => route.params.id,
+  (newId, oldId) => {
+    console.log('路由参数变化:', { oldId, newId })
+    if (newId && newId !== oldId) {
+      // 重置状态 - 修复：设置loading为true显示加载状态
+      loading.value = true
+      error.value = ''
+      gameData.value = null
+      hasAccess.value = false
+      gameLoaded.value = false
+      gameUrl.value = ''
+      
+      // 停止之前的游戏时间跟踪
+      stopGameTimer()
+      
+      // 重新检查访问权限
+      checkAccess()
+    }
+  },
+  { immediate: false }
+)
+
 onMounted(() => {
-  checkAccess()
+  console.log('GamePlay 组件已挂载，开始检查访问权限')
+  console.log('当前路由参数:', route.params)
+  
+  // 只在组件初始化时调用一次，且有有效的游戏ID
+  if (route.params.id && !isCheckingAccess.value) {
+    checkAccess()
+  }
+  
   document.addEventListener('keydown', handleKeydown)
 })
 
 onUnmounted(() => {
+  console.log('GamePlay 组件即将卸载，清理资源')
   document.removeEventListener('keydown', handleKeydown)
   // 清理定时器
   stopGameTimer()
+  // 重置检查标志
+  isCheckingAccess.value = false
 })
 </script>
 

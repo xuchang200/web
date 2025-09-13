@@ -820,8 +820,27 @@ export const incrementPlayCount = async (req: Request, res: Response, next: Next
       return next(new AppError('游戏不存在', 404));
     }
 
-    if (game.status !== GameStatus.PUBLISHED) {
-      return next(new AppError('游戏未发布', 403));
+    // 管理员可以测试所有游戏，无论发布状态
+    if (userRole === 'ADMIN') {
+      // 管理员测试模式处理
+      if (isTest) {
+        console.log('管理员测试模式，不计入播放次数');
+        return res.json({
+          success: true,
+          message: '管理员测试模式，不计入播放次数',
+          data: {
+            id: game.id,
+            playCount: game.playCount,
+            isTest: true
+          }
+        });
+      }
+      // 管理员正常游玩模式，继续执行后续逻辑
+    } else {
+      // 非管理员用户，必须是已发布的游戏
+      if (game.status !== GameStatus.PUBLISHED) {
+        return next(new AppError('游戏未发布', 403));
+      }
     }
 
     // 检查是否为测试模式
@@ -904,6 +923,7 @@ export const checkGameAccess = async (req: Request, res: Response, next: NextFun
   try {
     const { id } = req.params;
     const userId = (req as any).user?.id;
+    const userRole = (req as any).user?.role;
 
     if (!userId) {
       return next(new AppError('用户未登录', 401));
@@ -925,6 +945,22 @@ export const checkGameAccess = async (req: Request, res: Response, next: NextFun
 
     if (!game) {
       return next(new AppError('游戏不存在', 404));
+    }
+
+    // 管理员可以访问所有游戏，无论发布状态
+    if (userRole === 'ADMIN') {
+      console.log('管理员访问游戏，跳过发布状态和激活检查');
+      return res.json({
+        success: true,
+        message: '管理员访问权限验证通过',
+        data: {
+          gameId: game.id,
+          gameName: game.name,
+          gamePath: game.path,
+          hasAccess: true,
+          isAdmin: true
+        }
+      });
     }
 
     if (game.status !== GameStatus.PUBLISHED) {

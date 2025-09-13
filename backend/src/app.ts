@@ -18,7 +18,8 @@ import publicSettingsRoutes from './routes/publicSettingsRoutes';
 import dashboardAnalyticsRoutes from './routes/analytics/dashboardAnalyticsRoutes';
 import { initializeStorageDirectories } from './config/storage';
 
-dotenv.config();
+// 开发环境下从上级目录加载 .env 文件
+dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 
 const app = express();
 
@@ -43,9 +44,9 @@ app.use(ipFilter);
 // 静态文件服务 - 仅提供封面图片访问（游戏文件通过受控路由访问）
 app.use('/uploads/covers', express.static(path.join(process.cwd(), 'uploads', 'covers')));
 
-// 受控游戏内容访问
+// 受控游戏内容访问 - 修改路径避免与前端路由冲突
 import gameContentRoutes from './routes/gameContentRoutes';
-app.use('/game', gameContentRoutes);
+app.use('/api/game-content', gameContentRoutes);
 
 // 环境变量关键值校验（生产环境防止默认值）
 const requiredEnv = ['JWT_SECRET', 'DATABASE_URL'];
@@ -87,7 +88,7 @@ app.use('/api/public/settings', publicSettingsRoutes);
 
 // SPA fallback (在所有 API 路由之后, 错误处理中间件之前)
 app.use((req, res, next) => {
-  if (req.method === 'GET' && !req.path.startsWith('/api') && !req.path.startsWith('/uploads') && !req.path.startsWith('/game')) {
+  if (req.method === 'GET' && !req.path.startsWith('/api') && !req.path.startsWith('/uploads')) {
     return res.sendFile(path.join(frontendDist, 'index.html'));
   }
   next();

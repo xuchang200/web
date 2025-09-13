@@ -67,9 +67,9 @@ const checkAccess = async () => {
       hasAccess.value = true
       loadingMessage.value = '正在加载游戏资源...'
       
-      // 构建游戏URL，带上认证token
+      // 构建游戏URL，带上认证token - 使用新的API路径避免路由冲突
       const token = authStore.token
-      gameUrl.value = `/game/${gameId}?token=${token}`
+      gameUrl.value = `/api/game-content/${gameId}?token=${token}`
       
       // 延迟一秒让用户看到加载状态
       setTimeout(() => {
@@ -112,6 +112,7 @@ const goProfile = () => {
 const retryLoad = () => {
   loading.value = true
   error.value = ''
+  gameUrl.value = ''
   checkAccess()
 }
 

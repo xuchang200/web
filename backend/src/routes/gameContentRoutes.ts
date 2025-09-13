@@ -251,7 +251,19 @@ router.get('/:gameId', authenticateToken, async (req: express.Request, res: expr
       });
     }
 
-    res.redirect(`/game/${game.id}/index.html`);
+    // 检查游戏文件是否存在
+    const gameDir = path.join(STORAGE_CONFIG.GAMES_PATH, game.path);
+    const indexPath = path.join(gameDir, 'index.html');
+    
+    if (!fsSync.existsSync(indexPath)) {
+      return res.status(404).json({
+        success: false,
+        message: '游戏文件不存在或损坏'
+      });
+    }
+    
+    // 直接重定向到 index.html，使用新的API路径避免循环
+    res.redirect(`/api/game-content/${game.id}/index.html`);
   } catch (error) {
     console.error('游戏访问失败:', error);
     res.status(500).json({
