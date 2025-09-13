@@ -29,7 +29,9 @@ router.get('/profile', authenticateToken, async (req, res, next) => {
         createdAt: true,
         updatedAt: true,
         lastLoginAt: true,
-        activatedGamesCount: true
+        activatedGamesCount: true,
+        deletionRequestedAt: true,
+        deletionEffectiveAt: true
       }
     });
 

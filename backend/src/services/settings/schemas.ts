@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { DEFAULT_SITE_BASIC, DEFAULT_GAME_POLICY } from './defaults'
+import { DEFAULT_SITE_BASIC, DEFAULT_GAME_POLICY, DEFAULT_CONTENT_PAGES } from './defaults'
 
 export const SiteBasicSchema = z.object({
   siteName: z.string().min(1).max(60),
@@ -48,17 +48,30 @@ export const GamePolicySchema = z.object({
   })
 })
 
+export const ContentPagesSchema = z.object({
+  about: z.object({
+    enabled: z.boolean(),
+    title: z.string().min(1).max(100),
+    contentType: z.enum(['markdown', 'html']),
+    content: z.string().max(50000),
+    seoDescription: z.string().max(200)
+  })
+})
+
 export type SiteBasicInput = z.infer<typeof SiteBasicSchema>
 export type GamePolicyInput = z.infer<typeof GamePolicySchema>
+export type ContentPagesInput = z.infer<typeof ContentPagesSchema>
 
 export const schemaMap = {
   'site.basic': SiteBasicSchema,
-  'game.policy': GamePolicySchema
+  'game.policy': GamePolicySchema,
+  'content.pages': ContentPagesSchema
 }
 
 export const defaultMap = {
   'site.basic': DEFAULT_SITE_BASIC,
-  'game.policy': DEFAULT_GAME_POLICY
+  'game.policy': DEFAULT_GAME_POLICY,
+  'content.pages': DEFAULT_CONTENT_PAGES
 }
 
 export type SettingsGroupKey = keyof typeof schemaMap

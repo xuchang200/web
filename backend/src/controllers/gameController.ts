@@ -495,7 +495,8 @@ export const deleteGame = async (req: Request, res: Response, next: NextFunction
       include: {
         _count: {
           select: {
-            activationCodes: true
+            activationCodes: true,
+            userActivations: true
           }
         }
       }
@@ -505,14 +506,14 @@ export const deleteGame = async (req: Request, res: Response, next: NextFunction
       return next(new AppError('游戏不存在', 404));
     }
 
-    // 检查是否有关联的激活码
-    if (game._count.activationCodes > 0) {
-      return next(new AppError(`无法删除游戏，存在 ${game._count.activationCodes} 个相关的激活码`, 400));
+    // 检查是否有用户激活记录 - 正确的删除规则
+    if (game._count.userActivations > 0) {
+      return next(new AppError(`无法删除游戏，存在 ${game._count.userActivations} 个用户激活记录`, 400));
     }
 
     // 使用事务确保数据一致性
     await prisma.$transaction(async (tx) => {
-      // 1. 先记录日志（在删除之前）
+      // 1. 先记录日志（在删除之前）- 日志保留不动
       if (req.user) {
         await tx.log.create({
           data: {
@@ -534,19 +535,25 @@ export const deleteGame = async (req: Request, res: Response, next: NextFunction
                 playCount: game.playCount,
                 createdAt: game.createdAt.toISOString()
               },
-              activationCodesCount: game._count.activationCodes
+              activationCodesCount: game._count.activationCodes,
+              userActivationsCount: game._count.userActivations
             }
           }
         });
       }
 
-      // 2. 删除游戏记录
+      // 2. 删除绑定该游戏的激活码 - 按照新规则删除激活码
+      await tx.activationCode.deleteMany({
+        where: { gameId: id }
+      });
+
+      // 3. 删除游戏记录 - 日志会自动保留（因为外键关系设置）
       await tx.game.delete({
         where: { id }
       });
     });
 
-    // 3. 删除文件（在事务外进行，避免文件操作影响数据库事务）
+    // 4. 删除文件（在事务外进行，避免文件操作影响数据库事务）
     try {
       if (game.path) {
         await deleteGameFiles(game.path);

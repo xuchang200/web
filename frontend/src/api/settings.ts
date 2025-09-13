@@ -20,7 +20,7 @@ export const updateSiteSettings = (settings: SiteSettings) => {
 
 // 获取公共账号策略（无需管理员权限）
 export const getPublicAccountPolicy = () => {
-  return request<{ success: boolean; data: any }>({ url: '/public-settings/account-policy', method: 'GET' })
+  return request<{ success: boolean; data: any }>({ url: '/public/settings/account-policy', method: 'GET' })
 }
 
 // 新的多组系统设置 API （后端实现后可切换使用）

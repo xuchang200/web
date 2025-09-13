@@ -92,7 +92,7 @@ export const TextEx = {
   activateGameFail: '激活失败，请稍后重试',
   pwdChangeSuccess: '密码修改成功',
   pwdChangeFail: '密码修改失败，请稍后重试',
-  accountDeletionConfirm: (coolingDays:number, irreversible:boolean) => `确认要注销账号？${coolingDays>0 ? '账号将在冷静期后彻底删除。' : irreversible ? '该操作不可恢复。' : ''}`,
+  accountDeletionConfirm: (coolingDays:number, irreversible:boolean) => `确认要注销账号？${coolingDays>0 ? `账号将在${coolingDays}天冷静期后彻底删除。` : irreversible ? '该操作不可恢复。' : ''}`,
   accountDeletionSubmitSuccess: '已提交注销申请',
   actionCanceled: '已取消操作',
   actionCanceledLogout: '取消退出',

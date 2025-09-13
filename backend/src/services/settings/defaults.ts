@@ -234,3 +234,24 @@ export function mergeWithDefaultEmailSmtp(partial: any): EmailSmtpSettings {
     limits: { ...DEFAULT_EMAIL_SMTP.limits, ...(partial?.limits || {}) }
   }
 }
+
+// 内容页面设置默认值
+export const DEFAULT_CONTENT_PAGES = {
+  about: {
+    enabled: true,
+    title: '关于我们',
+    contentType: 'markdown' as 'markdown' | 'html',
+    content: '# 关于我们\n\n欢迎来到我们的平台！\n\n## 我们的使命\n\n为用户提供优质的游戏体验，打造一个充满乐趣的游戏社区。\n\n## 联系我们\n\n如果您有任何问题或建议，请随时联系我们。',
+    seoDescription: '了解我们的使命、团队和服务，打造更好的游戏体验'
+  }
+}
+
+export type ContentPagesSettings = typeof DEFAULT_CONTENT_PAGES
+
+export function mergeWithDefaultContentPages(partial: any): ContentPagesSettings {
+  return {
+    ...DEFAULT_CONTENT_PAGES,
+    ...(partial || {}),
+    about: { ...DEFAULT_CONTENT_PAGES.about, ...(partial?.about || {}) }
+  }
+}

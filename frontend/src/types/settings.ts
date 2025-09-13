@@ -1,7 +1,7 @@
 // 系统设置类型定义（前端）
 // 与后端规划保持一致；部分字段暂未在后端实现，UI 先占位。
 
-export type SettingsGroupKey = 'site.basic' | 'account.policy' | 'security.risk' | 'game.policy' | 'email.smtp'
+export type SettingsGroupKey = 'site.basic' | 'account.policy' | 'security.risk' | 'game.policy' | 'email.smtp' | 'content.pages'
 
 // 1. 基础与品牌
 export interface SiteBasicSettings {
@@ -98,12 +98,24 @@ export interface EmailSmtpSettings {
   }
 }
 
+// 6. 内容页面设置
+export interface ContentPagesSettings {
+  about: {
+    enabled: boolean
+    title: string
+    contentType: 'markdown' | 'html'
+    content: string
+    seoDescription: string
+  }
+}
+
 export interface SettingsPayloadMap {
   'site.basic': SiteBasicSettings
   'account.policy': AccountPolicySettings
   'security.risk': SecurityRiskSettings
   'game.policy': GamePolicySettings
   'email.smtp': EmailSmtpSettings
+  'content.pages': ContentPagesSettings
 }
 
 // 默认值（前端兜底用；真实默认以后端返回为准）
@@ -207,5 +219,15 @@ export const DEFAULT_EMAIL_SMTP: EmailSmtpSettings = {
     perEmailPerHour: 5,
     perEmailPerDay: 10,
     globalPerMinute: 50
+  }
+}
+
+export const DEFAULT_CONTENT_PAGES: ContentPagesSettings = {
+  about: {
+    enabled: true,
+    title: '关于我们',
+    contentType: 'markdown',
+    content: '# 关于我们\n\n欢迎来到我们的平台！\n\n## 我们的使命\n\n为用户提供优质的游戏体验，打造一个充满乐趣的游戏社区。\n\n## 联系我们\n\n如果您有任何问题或建议，请随时联系我们。',
+    seoDescription: '了解我们的使命、团队和服务，打造更好的游戏体验'
   }
 }

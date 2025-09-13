@@ -337,6 +337,54 @@
             </el-row>
           </el-form>
         </el-tab-pane>
+
+        <!-- 页面内容管理 -->
+        <el-tab-pane label="页面内容" name="content.pages">
+          <el-form ref="contentPagesRef" :model="contentPages" label-width="180px" status-icon>
+            <el-divider content-position="left">关于我们页面</el-divider>
+            <el-form-item label="启用关于页面">
+              <el-switch v-model="contentPages.about.enabled" />
+            </el-form-item>
+            
+            <template v-if="contentPages.about.enabled">
+              <el-form-item label="页面标题">
+                <el-input v-model="contentPages.about.title" placeholder="关于我们" />
+              </el-form-item>
+              
+              <el-form-item label="内容格式">
+                <el-radio-group v-model="contentPages.about.contentType">
+                  <el-radio label="markdown">Markdown</el-radio>
+                  <el-radio label="html">HTML</el-radio>
+                </el-radio-group>
+              </el-form-item>
+              
+              <el-form-item label="页面内容">
+                <el-input
+                  v-model="contentPages.about.content"
+                  type="textarea"
+                  :rows="20"
+                  :placeholder="contentPlaceholder"
+                />
+              </el-form-item>
+              
+              <el-form-item label="SEO描述">
+                <el-input
+                  v-model="contentPages.about.seoDescription"
+                  type="textarea"
+                  :rows="2"
+                  placeholder="用于SEO的页面描述..."
+                />
+              </el-form-item>
+              
+              <el-form-item label="内容预览">
+                <el-card class="content-preview">
+                  <div v-if="contentPages.about.contentType === 'html'" v-html="contentPages.about.content"></div>
+                  <div v-else class="markdown-preview">{{ contentPages.about.content }}</div>
+                </el-card>
+              </el-form-item>
+            </template>
+          </el-form>
+        </el-tab-pane>
       </el-tabs>
     </el-card>
   </div>
@@ -347,9 +395,9 @@ import { ref, reactive, onMounted, computed, watch } from 'vue'
 import { msg, AdminText } from '@/utils/message'
 import { confirmAction } from '@/utils/confirm'
 import { getSettingsGroup, patchSettingsGroup, resetSettingsGroup, getEmailSmtpSettings, updateEmailSmtpSettings, testSmtpConnection, sendTestEmail } from '@/api/settings'
-import { DEFAULT_SITE_BASIC, DEFAULT_ACCOUNT_POLICY, DEFAULT_SECURITY_RISK, DEFAULT_GAME_POLICY, DEFAULT_EMAIL_SMTP, type SiteBasicSettings, type AccountPolicySettings, type SecurityRiskSettings, type GamePolicySettings, type EmailSmtpSettings } from '@/types/settings'
+import { DEFAULT_SITE_BASIC, DEFAULT_ACCOUNT_POLICY, DEFAULT_SECURITY_RISK, DEFAULT_GAME_POLICY, DEFAULT_EMAIL_SMTP, DEFAULT_CONTENT_PAGES, type SiteBasicSettings, type AccountPolicySettings, type SecurityRiskSettings, type GamePolicySettings, type EmailSmtpSettings, type ContentPagesSettings } from '@/types/settings'
 
-const activeTab = ref<'site.basic' | 'account.policy' | 'security.risk' | 'game.policy' | 'email.smtp'>('site.basic')
+const activeTab = ref<'site.basic' | 'account.policy' | 'security.risk' | 'game.policy' | 'email.smtp' | 'content.pages'>('site.basic')
 const loadingAll = ref(false)
 const saving = ref(false)
 
@@ -359,6 +407,7 @@ const accountPolicy = reactive<AccountPolicySettings>({ ...DEFAULT_ACCOUNT_POLIC
 const securityRisk = reactive<SecurityRiskSettings>({ ...DEFAULT_SECURITY_RISK })
 const gamePolicy = reactive<GamePolicySettings>({ ...DEFAULT_GAME_POLICY })
 const emailSmtp = reactive<EmailSmtpSettings>({ ...DEFAULT_EMAIL_SMTP })
+const contentPages = reactive<ContentPagesSettings>({ ...DEFAULT_CONTENT_PAGES })
 
 // 监听端口变化，自动调整SSL设置
 watch(() => emailSmtp.port, (newPort) => {
@@ -397,6 +446,15 @@ const passwordPolicyDesc = computed(() => {
   return '密码需包含: ' + parts.join('、')
 })
 
+// 内容占位符
+const contentPlaceholder = computed(() => {
+  if (contentPages.about.contentType === 'markdown') {
+    return '# 关于我们\n\n欢迎来到我们的平台...\n\n## 我们的使命\n\n为用户提供优质的游戏体验...'
+  } else {
+    return '<div class="about-container">\n  <h1>关于我们</h1>\n  <p>欢迎来到我们的平台...</p>\n</div>'
+  }
+})
+
 // 监听（简化：使用 JSON stringify 对比，性能对当前规模可接受）
 function watchDirty() {
   const snapshot: Record<string, string> = {}
@@ -406,7 +464,8 @@ function watchDirty() {
       'account.policy': JSON.stringify(accountPolicy),
       'security.risk': JSON.stringify(securityRisk),
       'game.policy': JSON.stringify(gamePolicy),
-      'email.smtp': JSON.stringify(emailSmtp)
+      'email.smtp': JSON.stringify(emailSmtp),
+      'content.pages': JSON.stringify(contentPages)
     }
     for (const k of Object.keys(current)) {
       if (!snapshot[k]) snapshot[k] = current[k]
@@ -426,10 +485,11 @@ async function loadGroup(group: string) {
     }
     
     if (res.success) {
-      const target = group === 'site.basic' ? siteBasic : 
-                    group === 'account.policy' ? accountPolicy : 
-                    group === 'security.risk' ? securityRisk : 
-                    group === 'game.policy' ? gamePolicy : emailSmtp
+      const target = group === 'site.basic' ? siteBasic :
+                    group === 'account.policy' ? accountPolicy :
+                    group === 'security.risk' ? securityRisk :
+                    group === 'game.policy' ? gamePolicy :
+                    group === 'content.pages' ? contentPages : emailSmtp
       Object.assign(target, res.data)
     }
   } catch (e) {
@@ -439,7 +499,7 @@ async function loadGroup(group: string) {
 
 async function reloadAll() {
   loadingAll.value = true
-  await Promise.all(['site.basic','account.policy','security.risk','game.policy','email.smtp'].map(loadGroup))
+  await Promise.all(['site.basic','account.policy','security.risk','game.policy','email.smtp','content.pages'].map(loadGroup))
   loadingAll.value = false
   msg.success(AdminText.loadSettingsAll)
 }
@@ -448,10 +508,11 @@ async function saveCurrent() {
   const group = activeTab.value
   saving.value = true
   try {
-    const payload: any = group === 'site.basic' ? siteBasic : 
-                        group === 'account.policy' ? accountPolicy : 
-                        group === 'security.risk' ? securityRisk : 
-                        group === 'game.policy' ? gamePolicy : emailSmtp
+    const payload: any = group === 'site.basic' ? siteBasic :
+                        group === 'account.policy' ? accountPolicy :
+                        group === 'security.risk' ? securityRisk :
+                        group === 'game.policy' ? gamePolicy :
+                        group === 'content.pages' ? contentPages : emailSmtp
     
     if (group === 'email.smtp') {
       await updateEmailSmtpSettings(payload)
@@ -482,6 +543,7 @@ function resetCurrent() {
       else if (group==='account.policy') Object.assign(accountPolicy, DEFAULT_ACCOUNT_POLICY)
       else if (group==='security.risk') Object.assign(securityRisk, DEFAULT_SECURITY_RISK)
       else if (group==='game.policy') Object.assign(gamePolicy, DEFAULT_GAME_POLICY)
+      else if (group==='content.pages') Object.assign(contentPages, DEFAULT_CONTENT_PAGES)
       else Object.assign(emailSmtp, DEFAULT_EMAIL_SMTP)
       dirtyMap[group] = false
     }
@@ -537,5 +599,22 @@ watchDirty()
 }
 .settings-tabs {
   margin-top: 16px;
+}
+
+.content-preview {
+  max-height: 400px;
+  overflow-y: auto;
+  background-color: var(--el-fill-color-lighter);
+}
+
+.markdown-preview {
+  white-space: pre-wrap;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.mb12 {
+  margin-bottom: 12px;
 }
 </style>

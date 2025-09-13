@@ -30,6 +30,11 @@ const routes: Array<RouteRecordRaw> = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/about',
+    name: 'About',
+    component: () => import('../views/About.vue')
+  },
+  {
     path: '/game/:id',
     name: 'GamePlay',
     component: () => import('../views/GamePlay.vue'),

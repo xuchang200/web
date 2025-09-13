@@ -1,16 +1,23 @@
 <template>
   <div class="profile-page">
+    <!-- 电脑端简化顶栏 -->
+    <header class="simple-header desktop-only">
+      <div class="header-content">
+        <div class="logo" @click="$router.push('/')">
+          <span class="logo-text">{{ siteInfo.siteName }}</span>
+        </div>
+        <nav class="navigation">
+          <router-link to="/">首页</router-link>
+          <router-link to="/about">关于我们</router-link>
+        </nav>
+      </div>
+    </header>
+    
     <!-- 移动端导航 -->
-    <MobileNav 
+    <MobileNav
       :site-info="{ siteName: 'withU' }"
       class="mobile-only"
     />
-    
-    <!-- 页面标题 -->
-    <div class="page-header">
-      <h1 class="page-title">个人中心</h1>
-      <p class="page-subtitle">管理您的账户信息和游戏资产</p>
-    </div>
 
     <!-- 主要内容区域 -->
     <div class="profile-content">
@@ -37,6 +44,18 @@
                 <p class="user-email">{{ userInfo.email }}</p>
                 <p class="join-date">注册时间：{{ formatDate(userInfo.createdAt) }}</p>
                 <p class="game-count">拥有游戏：{{ userInfo.activatedGamesCount }}款</p>
+                
+                <!-- 冷静期状态显示 -->
+                <div v-if="userInfo.deletionRequestedAt" class="deletion-status">
+                  <el-alert
+                    type="warning"
+                    :closable="false"
+                    :title="`账号注销冷静期：还剩 ${remainingDeletionDays} 天`"
+                    :description="`您在 ${userInfo.deletionRequestedAt ? formatDate(userInfo.deletionRequestedAt) : '未知时间'} 申请了账号注销，将于 ${userInfo.deletionEffectiveAt ? formatDate(userInfo.deletionEffectiveAt) : '未知时间'} 正式删除。在此期间可随时取消注销。`"
+                    show-icon
+                    class="deletion-warning"
+                  />
+                </div>
               </div>
 
               <div class="user-actions">
@@ -44,10 +63,27 @@
                   <el-icon><Lock /></el-icon>
                   修改密码
                 </el-button>
-                <el-button type="warning" size="small" @click="confirmAccountDeletion" v-if="accountPolicy.accountDeletion.enabled">
-                  <el-icon><SwitchButton /></el-icon>
-                  注销账号
-                </el-button>
+                <!-- 根据冷静期状态显示不同按钮 -->
+                <template v-if="accountPolicy.accountDeletion.enabled">
+                  <el-button
+                    v-if="userInfo.deletionRequestedAt"
+                    type="success"
+                    size="small"
+                    @click="handleCancelAccountDeletion"
+                  >
+                    <el-icon><CircleCheck /></el-icon>
+                    取消注销
+                  </el-button>
+                  <el-button
+                    v-else
+                    type="warning"
+                    size="small"
+                    @click="confirmAccountDeletion"
+                  >
+                    <el-icon><SwitchButton /></el-icon>
+                    注销账号
+                  </el-button>
+                </template>
                 <el-button type="danger" size="small" @click="handleLogout">
                   <el-icon><SwitchButton /></el-icon>
                   退出登录
@@ -159,6 +195,9 @@
         </el-col>
       </el-row>
     </div>
+    
+    <!-- 版权信息 -->
+    <SiteFooter />
 
     <!-- 修改密码对话框 -->
     <el-dialog
@@ -241,7 +280,9 @@ const userInfo = reactive({
   email: '',
   avatar: '',
   createdAt: '',
-  activatedGamesCount: 0
+  activatedGamesCount: 0,
+  deletionRequestedAt: null as string | null,
+  deletionEffectiveAt: null as string | null
 })
 
 // 激活码相关
@@ -252,11 +293,14 @@ const activating = ref(false)
 // 我的游戏列表（从后端加载）
 const myGames = ref<Array<{ id: string; title: string; description: string; coverImage: string | null; activatedAt: string }>>([])
 
-import { getMyGames, activateByCode, getUserProfile, changePassword, requestAccountDeletion } from '@/api/user'
+import { getMyGames, activateByCode, getUserProfile, changePassword, requestAccountDeletion, cancelAccountDeletion as cancelAccountDeletionAPI } from '@/api/user'
 import { getPublicAccountPolicy } from '@/api/settings'
 import { useAuthStore } from '@/store/auth'
+import { useSiteInfoStore } from '@/store/siteInfo'
+import SiteFooter from '@/components/SiteFooter.vue'
 
 const authStore = useAuthStore()
+const siteInfo = useSiteInfoStore()
 
 // 修改密码相关
 const passwordDialogVisible = ref(false)
@@ -323,7 +367,16 @@ const handleActivateGame = async () => {
 const loadUserProfile = async () => {
   try {
     const response = await getUserProfile()
-    const userData = response.data
+    let userData;
+    
+    // 处理不同的响应格式
+    if (response.success && response.data) {
+      userData = response.data
+    } else if (response.data) {
+      userData = response.data
+    } else {
+      throw new Error('无效的响应格式')
+    }
     
     // 更新用户信息
     Object.assign(userInfo, {
@@ -333,13 +386,17 @@ const loadUserProfile = async () => {
       email: userData.email,
       avatar: userData.avatar || '',
       createdAt: userData.createdAt,
-      activatedGamesCount: userData.activatedGamesCount || 0
+      activatedGamesCount: userData.activatedGamesCount || 0,
+      deletionRequestedAt: userData.deletionRequestedAt || null,
+      deletionEffectiveAt: userData.deletionEffectiveAt || null
     })
     
     // 同时更新store中的用户信息
     if (authStore.user) {
       authStore.user.activatedGamesCount = userData.activatedGamesCount || 0
     }
+    
+    console.log('用户信息加载成功:', userInfo)
   } catch (error) {
     console.error('获取用户信息失败:', error)
   msg.error(TextEx.loadUserFail, 'profile-load-user-fail')
@@ -379,6 +436,16 @@ const passwordPolicyDesc = computed(() => {
   return '密码需包含：' + parts.join('、')
 })
 
+// 计算冷静期剩余天数
+const remainingDeletionDays = computed(() => {
+  if (!userInfo.deletionEffectiveAt) return 0
+  const now = new Date()
+  const effectiveDate = new Date(userInfo.deletionEffectiveAt)
+  const diff = effectiveDate.getTime() - now.getTime()
+  const days = Math.ceil(diff / (1000 * 60 * 60 * 24))
+  return Math.max(0, days)
+})
+
 function validateNewPassword(_rule: any, value: string, callback: Function) {
   const p = accountPolicy.password
   if (!value) return callback(new Error('请输入新密码'))
@@ -410,7 +477,30 @@ async function confirmAccountDeletion() {
       cancelText: '取消',
       successMessage: TextEx.accountDeletionSubmitSuccess,
       cancelMessage: TextEx.actionCanceled,
-      onConfirm: async ()=>{ await requestAccountDeletion() }
+      onConfirm: async () => {
+        await requestAccountDeletion()
+        await loadUserProfile() // 重新加载用户信息以更新冷静期状态
+      }
+    })
+    return confirmed
+  } catch {}
+}
+
+// 取消账号注销
+async function handleCancelAccountDeletion() {
+  try {
+    const confirmed = await confirmAction({
+      message: '确认取消账号注销吗？取消后您的账号将恢复正常状态。',
+      title: '确认取消注销',
+      confirmText: '确认取消',
+      cancelText: '再想想',
+      type: 'info',
+      successMessage: '已取消账号注销申请',
+      cancelMessage: '已保持注销申请状态',
+      onConfirm: async () => {
+        await cancelAccountDeletionAPI()
+        await loadUserProfile() // 重新加载用户信息以更新状态
+      }
     })
     return confirmed
   } catch {}
@@ -465,7 +555,14 @@ const handleLogout = () => {
 const loadMyGames = async () => {
   try {
     const response = await getMyGames()
-    myGames.value = response.data || []
+    // 处理不同的响应格式
+    if (response.success && response.data) {
+      myGames.value = response.data
+    } else if (Array.isArray(response.data)) {
+      myGames.value = response.data
+    } else {
+      myGames.value = []
+    }
   } catch (error) {
     console.error('获取我的游戏列表失败:', error)
   msg.error(TextEx.loadMyGamesFail, 'profile-load-my-games-fail')
@@ -485,33 +582,95 @@ onMounted(async () => {
     font-display: swap;
 }
 
+// 简化顶栏样式
+.simple-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 128, 171, 0.2);
+  box-shadow: 0 2px 20px rgba(255, 128, 171, 0.1);
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 40px;
+  height: 70px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.logo {
+  cursor: pointer;
+  transform: translate(-5px, 2px);
+  
+  .logo-text {
+    font-family: 'ZSFT-dd', cursive;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #ff4081;
+    text-shadow: 2px 2px 0px #ff80ab, 4px 4px 8px rgba(255, 64, 129, 0.3);
+    transition: all 0.3s ease;
+    
+    &:hover {
+      transform: scale(1.05);
+      color: #f50057;
+    }
+  }
+}
+
+.navigation {
+  display: flex;
+  gap: 30px;
+  
+  a {
+    color: #666;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    
+    &:hover {
+      color: #ff4081;
+    }
+    
+    &.router-link-active {
+      color: #ff4081;
+      font-weight: 600;
+    }
+  }
+}
+
+// 响应式显示控制
+.desktop-only {
+  display: block;
+}
+
+.mobile-only {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .desktop-only {
+    display: none;
+  }
+  
+  .mobile-only {
+    display: block;
+  }
+}
+
 .profile-page {
   min-height: 100vh;
   background: url('@/assets/images/login-background.jpg') no-repeat center center;
   background-size: cover;
   background-attachment: fixed;
   padding: 100px 20px 20px;
-
-  .page-header {
-    text-align: center;
-    margin-bottom: 30px;
-    
-    .page-title {
-      font-size: 2.5rem;
-      font-weight: 700;
-      color: #ff4081;
-      margin: 0;
-      text-shadow: 2px 2px 0px #ff80ab, 4px 4px 8px rgba(255, 64, 129, 0.3);
-    }
-    
-    .page-subtitle {
-      font-size: 1.1rem;
-      color: rgba(255, 255, 255, 0.9);
-      margin: 10px 0 0 0;
-      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.6);
-      font-weight: 500;
-    }
-  }
 
   .profile-content {
     max-width: 1200px;

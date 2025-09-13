@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client'
-import { mergeWithDefaultSiteBasic, DEFAULT_SITE_BASIC, SiteBasicSettings, DEFAULT_ACCOUNT_POLICY, mergeWithDefaultAccountPolicy, AccountPolicySettings, DEFAULT_SECURITY_RISK, mergeWithDefaultSecurityRisk, SecurityRiskSettings, DEFAULT_GAME_POLICY, mergeWithDefaultGamePolicy, GamePolicySettings, DEFAULT_EMAIL_SMTP, mergeWithDefaultEmailSmtp, EmailSmtpSettings } from './defaults'
+import { mergeWithDefaultSiteBasic, DEFAULT_SITE_BASIC, SiteBasicSettings, DEFAULT_ACCOUNT_POLICY, mergeWithDefaultAccountPolicy, AccountPolicySettings, DEFAULT_SECURITY_RISK, mergeWithDefaultSecurityRisk, SecurityRiskSettings, DEFAULT_GAME_POLICY, mergeWithDefaultGamePolicy, GamePolicySettings, DEFAULT_EMAIL_SMTP, mergeWithDefaultEmailSmtp, EmailSmtpSettings, DEFAULT_CONTENT_PAGES, mergeWithDefaultContentPages, ContentPagesSettings } from './defaults'
 import { createLog } from '../logService'
 
 function deepEqual(a: any, b: any): boolean {
@@ -20,14 +20,15 @@ function deepEqual(a: any, b: any): boolean {
   return false
 }
 
-export type SettingsGroupKey = 'site.basic' | 'account.policy' | 'security.risk' | 'game.policy' | 'email.smtp'
+export type SettingsGroupKey = 'site.basic' | 'account.policy' | 'security.risk' | 'game.policy' | 'email.smtp' | 'content.pages'
 
 const defaultMap: Record<SettingsGroupKey, any> = {
   'site.basic': DEFAULT_SITE_BASIC,
   'account.policy': DEFAULT_ACCOUNT_POLICY,
   'security.risk': DEFAULT_SECURITY_RISK,
   'game.policy': DEFAULT_GAME_POLICY,
-  'email.smtp': DEFAULT_EMAIL_SMTP
+  'email.smtp': DEFAULT_EMAIL_SMTP,
+  'content.pages': DEFAULT_CONTENT_PAGES
 }
 
 import prisma from '../../lib/prisma'
@@ -40,6 +41,7 @@ function applyDefault(key: SettingsGroupKey, value: any) {
   if (key === 'security.risk') return mergeWithDefaultSecurityRisk(value)
   if (key === 'game.policy') return mergeWithDefaultGamePolicy(value)
   if (key === 'email.smtp') return mergeWithDefaultEmailSmtp(value)
+  if (key === 'content.pages') return mergeWithDefaultContentPages(value)
   return value
 }
 
@@ -147,6 +149,19 @@ function validateEmailSmtp(value: any): EmailSmtpSettings {
   return v
 }
 
+function validateContentPages(value: any): ContentPagesSettings {
+  const v = mergeWithDefaultContentPages(value)
+  
+  // 验证about页面设置
+  if (typeof v.about.enabled !== 'boolean') throw new Error('关于页面启用状态必须为布尔值')
+  if (typeof v.about.title !== 'string' || v.about.title.length === 0 || v.about.title.length > 100) throw new Error('页面标题不合法')
+  if (!['markdown', 'html'].includes(v.about.contentType)) throw new Error('内容格式必须为markdown或html')
+  if (typeof v.about.content !== 'string' || v.about.content.length > 50000) throw new Error('页面内容不合法或过长')
+  if (typeof v.about.seoDescription !== 'string' || v.about.seoDescription.length > 200) throw new Error('SEO描述不合法')
+  
+  return v
+}
+
 function calcDiff(before: any, after: any, pathPrefix = ''): Record<string, { before: any; after: any }> {
   const diff: Record<string, { before: any; after: any }> = {}
   const keys = new Set<string>([...Object.keys(before || {}), ...Object.keys(after || {})])
@@ -171,6 +186,7 @@ export async function updateSettings(key: SettingsGroupKey, data: any, operatorI
   else if (key === 'security.risk') parsed = validateSecurityRisk(data)
   else if (key === 'game.policy') parsed = validateGamePolicy(data)
   else if (key === 'email.smtp') parsed = validateEmailSmtp(data)
+  else if (key === 'content.pages') parsed = validateContentPages(data)
 
   const existingRow = await prisma.systemSettings.findUnique({ where: { key } })
   const beforeVal = existingRow ? applyDefault(key, existingRow.value) : defaultMap[key]

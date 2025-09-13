@@ -3,6 +3,7 @@ import { getAdminSiteSettings, updateAdminSiteSettings } from '../controllers/ad
 import { getAccountPolicy, updateAccountPolicy } from '../controllers/accountPolicyController';
 import { getSecurityRisk, updateSecurityRisk } from '../controllers/securityRiskController';
 import { getGamePolicy, updateGamePolicy, resetGamePolicy } from '../controllers/gamePolicyController';
+import { getContentPagesSettings, updateContentPagesSettings } from '../controllers/contentPagesController';
 import { authenticateToken, requireAdmin } from '../middlewares/authMiddleware';
 
 const router = express.Router();
@@ -33,6 +34,11 @@ router.get('/game.policy', getGamePolicy)
 router.patch('/game.policy', updateGamePolicy)
 router.put('/game.policy', updateGamePolicy)
 router.post('/game.policy/reset', resetGamePolicy)
+
+// 内容页面设置 - 使用专门控制器
+router.get('/content.pages', getContentPagesSettings);
+router.patch('/content.pages', updateContentPagesSettings);
+router.put('/content.pages', updateContentPagesSettings);
 
 // 已移除 SMTP 与邮件模板相关路由
 

@@ -5,6 +5,7 @@
       <h1 class="title">
         <span class="title-text">{{ siteInfo.siteName }}</span>
       </h1>
+      <p class="site-description">{{ siteInfo.site?.siteDescription || '一个温馨的小站，与你分享美好时光' }}</p>
       
       <!-- 注册表单 -->
       <form class="login-form" @submit.prevent="handleRegister">
@@ -70,8 +71,6 @@
         </button>
       </div>
     </div>
-    
-    <SiteFooter />
   </div>
 </template>
 
@@ -192,7 +191,6 @@ const handleRegister = async () => {
 }
 import { useSiteInfoStore } from '@/store/siteInfo'
 onMounted(loadPolicy)
-import SiteFooter from '@/components/SiteFooter.vue'
 const siteInfo = useSiteInfoStore()
 </script>
 
@@ -226,6 +224,7 @@ const siteInfo = useSiteInfoStore()
   max-width: 400px;
   border: 4px solid #A56A5A; // 粉棕色边框，加粗
   box-shadow: 0 20px 50px rgba(100, 50, 40, 0.3);
+  margin: 0 auto; // 确保水平居中
 }
 
 .pwd-hint {
@@ -249,6 +248,16 @@ const siteInfo = useSiteInfoStore()
       2px 2px 0px #ff80ab,
       4px 4px 8px rgba(255, 64, 129, 0.3);
   }
+}
+
+// 站点描述样式
+.site-description {
+  text-align: center;
+  margin: -30px 0 35px 0;
+  font-size: 0.8rem;
+  color: #888;
+  font-weight: 400;
+  line-height: 1.4;
 }
 
 // 表单样式
@@ -463,11 +472,17 @@ const siteInfo = useSiteInfoStore()
 @media (max-width: 768px) {
   .login-container {
     padding: 15px;
+    justify-content: center;
+    align-items: center;
   }
   
   .login-box {
     padding: 30px 25px;
     max-width: 350px;
+    margin: 0 auto;
+    left: 0;
+    right: 0;
+    transform: none;
   }
   
   .title .title-text {
@@ -485,9 +500,19 @@ const siteInfo = useSiteInfoStore()
 }
 
 @media (max-width: 480px) {
+  .login-container {
+    padding: 10px;
+  }
+  
   .login-box {
     padding: 25px 20px;
     border-radius: 25px;
+    max-width: calc(100% - 20px);
+    margin: 0 auto;
+    left: 0;
+    right: 0;
+    transform: none;
+    box-sizing: border-box;
   }
   
   .title .title-text {
