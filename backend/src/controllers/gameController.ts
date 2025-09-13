@@ -496,7 +496,7 @@ export const deleteGame = async (req: Request, res: Response, next: NextFunction
         _count: {
           select: {
             activationCodes: true,
-            userActivations: true
+            activatedByUsers: true
           }
         }
       }
@@ -507,8 +507,8 @@ export const deleteGame = async (req: Request, res: Response, next: NextFunction
     }
 
     // 检查是否有用户激活记录 - 正确的删除规则
-    if (game._count.userActivations > 0) {
-      return next(new AppError(`无法删除游戏，存在 ${game._count.userActivations} 个用户激活记录`, 400));
+    if (game._count.activatedByUsers > 0) {
+      return next(new AppError(`无法删除游戏，存在 ${game._count.activatedByUsers} 个用户激活记录`, 400));
     }
 
     // 使用事务确保数据一致性
@@ -536,7 +536,7 @@ export const deleteGame = async (req: Request, res: Response, next: NextFunction
                 createdAt: game.createdAt.toISOString()
               },
               activationCodesCount: game._count.activationCodes,
-              userActivationsCount: game._count.userActivations
+              userActivationsCount: game._count.activatedByUsers
             }
           }
         });
